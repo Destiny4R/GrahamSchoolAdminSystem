@@ -33,11 +33,21 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
         public int OtherPaymentsPendingCount { get; set; }
 
         // ── Grand Totals ─────────────────────────────────────────────────────
+        /// <summary>Total fees expected (school fees + PTA levy only; other payments have no fixed "expected" amount).</summary>
         public decimal GrandTotalExpected => TermlyFeesExpected + PTAFeesExpected;
+
+        /// <summary>Total revenue collected across all payment types.</summary>
         public decimal GrandTotalCollected => TermlyFeesCollected + PTAFeesCollected + OtherPaymentsCollected;
-        public decimal GrandTotalOutstanding => TermlyFeesOutstanding + PTAFeesOutstanding + OtherPaymentsPending;
+
+        /// <summary>Outstanding amount for payment types that have a configured expected amount (school fees + PTA only).</summary>
+        public decimal GrandTotalOutstanding => TermlyFeesOutstanding + PTAFeesOutstanding;
+
+        /// <summary>
+        /// Collection percentage based only on payment types with a configured expected amount (school fees + PTA)
+        /// so the percentage stays within 0–100%.
+        /// </summary>
         public decimal GrandCollectionPct => GrandTotalExpected > 0
-            ? Math.Round(GrandTotalCollected / GrandTotalExpected * 100, 1) : 0;
+            ? Math.Round((TermlyFeesCollected + PTAFeesCollected) / GrandTotalExpected * 100, 1) : 0;
 
         // ── Payment Approval Status (all types combined) ──────────────────────
         public int TotalApprovedPayments => TermlyFeesApprovedCount + PTAFeesApprovedCount + OtherPaymentsApprovedCount;

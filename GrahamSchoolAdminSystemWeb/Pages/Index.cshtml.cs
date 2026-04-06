@@ -44,7 +44,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages
                 // ── Other Payments (aggregate directly) ────────────────────────
                 var otherApprovedTask = _context.OtherPayments
                     .Where(x => x.Status == PaymentStatus.Approved && x.PaymentState != PaymentState.Cancelled)
-                    .SumAsync(x => (decimal?)x.Amount) ;
+                    .SumAsync(x => (decimal?)x.Amount);
 
                 var otherPendingAmtTask = _context.OtherPayments
                     .Where(x => x.Status == PaymentStatus.Pending && x.PaymentState != PaymentState.Cancelled)
