@@ -1,7 +1,13 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Dashboard";
+    var d = Model.DashboardData;
+    string Fmt(decimal v) => v >= 1_000_000
+        ? "₦" + (v / 1_000_000m).ToString("0.##") + "M"
+        : v >= 1_000
+            ? "₦" + (v / 1_000m).ToString("0.##") + "K"
+            : "₦" + v.ToString("N0");
 }
 
 <div class="content-inner">
@@ -10,8 +16,8 @@
     <div class="row g-3 mb-3">
         <div class="col-lg-8">
             <div class="welcome-banner">
-                <div class="wb-title">Good Morning, Admin 👋</div>
-                <div class="wb-sub">Friday, 27 March 2026 · Term 2, Week 11</div>
+                <div class="wb-title">Finance Dashboard 💰</div>
+                <div class="wb-sub">@DateTime.Now.ToString("dddd, dd MMMM yyyy") · @d.CurrentSessionLabel</div>
                 <div class="wb-badge"><i class="bi bi-patch-check-fill"></i> All systems running normally</div>
             </div>
         </div>
@@ -22,12 +28,12 @@
                 </div>
                 <div class="p-3">
                     <div class="row g-2">
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-person-plus-fill"></i><span>Add Student</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-clipboard-plus-fill"></i><span>Mark Attendance</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-receipt-cutoff"></i><span>Record Fee</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-megaphone-fill"></i><span>New Notice</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-calendar-plus-fill"></i><span>Schedule Exam</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-download"></i><span>Export Report</span></a></div>
+                        <div class="col-4"><a asp-page="/admin/admission/index" class="qa-btn"><i class="bi bi-person-plus-fill"></i><span>Add Student</span></a></div>
+                        <div class="col-4"><a asp-page="/admin/termly-registeration/upsert" class="qa-btn"><i class="bi bi-person-badge-fill"></i><span>Term Reg.</span></a></div>
+                        <div class="col-4"><a asp-page="/admin/feesmanager/fees-payment/make-payment" class="qa-btn"><i class="bi bi-receipt-cutoff"></i><span>Record Fee</span></a></div>
+                        <div class="col-4"><a asp-page="/admin/ptamanager/pta-payment/MakePTAPayment" class="qa-btn"><i class="bi bi-people-fill"></i><span>PTA Payment</span></a></div>
+                        <div class="col-4"><a asp-page="/admin/other-payments/fees-payment/add-payment" class="qa-btn"><i class="bi bi-wallet2"></i><span>Other Pay</span></a></div>
+                        <div class="col-4"><a asp-page="/admin/feesmanager/fees-payment-report" class="qa-btn"><i class="bi bi-bar-chart-fill"></i><span>Fee Report</span></a></div>
                     </div>
                 </div>
             </div>
@@ -40,301 +46,401 @@
             <div class="stat-card blue">
                 <div class="deco-circle"></div>
                 <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-                <div class="stat-value">1,284</div>
+                <div class="stat-value">@d.TotalStudents.ToString("N0")</div>
                 <div class="stat-label">Total Students</div>
-                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> +42 this term</div>
+                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> registered</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card gold">
                 <div class="deco-circle"></div>
                 <div class="stat-icon"><i class="bi bi-person-badge-fill"></i></div>
-                <div class="stat-value">86</div>
-                <div class="stat-label">Teaching Staff</div>
-                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> +4 new hires</div>
+                <div class="stat-value">@d.TotalEmployees.ToString("N0")</div>
+                <div class="stat-label">Total Staff</div>
+                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> on record</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card mint">
                 <div class="deco-circle"></div>
                 <div class="stat-icon"><i class="bi bi-building-fill"></i></div>
-                <div class="stat-value">38</div>
+                <div class="stat-value">@d.ActiveClasses.ToString("N0")</div>
                 <div class="stat-label">Active Classes</div>
-                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> 2 added</div>
+                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> configured</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card rose">
                 <div class="deco-circle"></div>
                 <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
-                <div class="stat-value">₦4.2M</div>
-                <div class="stat-label">Fees Collected</div>
-                <div class="stat-change down"><i class="bi bi-arrow-down-short"></i> 12% pending</div>
+                <div class="stat-value">@Fmt(d.GrandTotalCollected)</div>
+                <div class="stat-label">Total Revenue</div>
+                @if (d.GrandTotalOutstanding > 0)
+                {
+                    <div class="stat-change down"><i class="bi bi-arrow-down-short"></i> @Fmt(d.GrandTotalOutstanding) outstanding</div>
+                }
+                else
+                {
+                    <div class="stat-change up"><i class="bi bi-check-circle-fill"></i> fully collected</div>
+                }
             </div>
         </div>
     </div>
 
-    <!-- Attendance Overview + Subject Performance -->
+    <!-- Finance Cards: Termly Fees | PTA Levy | Other Payments -->
     <div class="row g-3 mb-3">
-        <!-- Attendance Chart -->
+        <!-- Termly School Fees -->
+        <div class="col-md-4">
+            <div class="panel h-100">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="bi bi-cash-coin me-1" style="color:var(--sky);"></i> School Fees</span>
+                    <a asp-page="/admin/feesmanager/fees-payment-report" class="panel-action">Report →</a>
+                </div>
+                <div class="p-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.82rem;color:#7b82a8;">Expected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:var(--navy);">@("₦" + d.TermlyFeesExpected.ToString("N0"))</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.82rem;color:#7b82a8;">Collected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:#1db87d;">@("₦" + d.TermlyFeesCollected.ToString("N0"))</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="font-size:.82rem;color:#7b82a8;">Outstanding</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:var(--rose);">@("₦" + d.TermlyFeesOutstanding.ToString("N0"))</span>
+                    </div>
+                    <div class="bar-track mb-1" style="height:8px;">
+                        <div class="bar-fill" style="width:@(d.TermlyFeesCollectionPct)%;background:linear-gradient(90deg,var(--sky),#3b82f6);"></div>
+                    </div>
+                    <div style="font-size:.72rem;color:#9099be;margin-bottom:14px;">@d.TermlyFeesCollectionPct% collected</div>
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div style="background:#e6faf4;border-radius:8px;padding:9px;">
+                                <div style="font-family:'DM Mono',monospace;font-size:.92rem;color:#1db87d;">@d.TermlyFeesApprovedCount</div>
+                                <div style="font-size:.68rem;color:#9099be;">Approved</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:#fef4d3;border-radius:8px;padding:9px;">
+                                <div style="font-family:'DM Mono',monospace;font-size:.92rem;color:#c4860e;">@d.TermlyFeesPendingCount</div>
+                                <div style="font-size:.68rem;color:#9099be;">Pending</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:#e8f4ff;border-radius:8px;padding:9px;">
+                                <div style="font-family:'DM Mono',monospace;font-size:.92rem;color:#3b82f6;">@d.TermlyFeesPartialCount</div>
+                                <div style="font-size:.68rem;color:#9099be;">Partial</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PTA Levy -->
+        <div class="col-md-4">
+            <div class="panel h-100">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="bi bi-people me-1" style="color:var(--gold);"></i> PTA Levy</span>
+                    <a asp-page="/admin/ptamanager/pta-fees-report" class="panel-action">Report →</a>
+                </div>
+                <div class="p-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.82rem;color:#7b82a8;">Expected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:var(--navy);">@("₦" + d.PTAFeesExpected.ToString("N0"))</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.82rem;color:#7b82a8;">Collected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:#1db87d;">@("₦" + d.PTAFeesCollected.ToString("N0"))</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="font-size:.82rem;color:#7b82a8;">Outstanding</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:var(--rose);">@("₦" + d.PTAFeesOutstanding.ToString("N0"))</span>
+                    </div>
+                    <div class="bar-track mb-1" style="height:8px;">
+                        <div class="bar-fill" style="width:@(d.PTAFeesCollectionPct)%;background:linear-gradient(90deg,var(--gold),#f59e0b);"></div>
+                    </div>
+                    <div style="font-size:.72rem;color:#9099be;margin-bottom:14px;">@d.PTAFeesCollectionPct% collected</div>
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <div style="background:#e6faf4;border-radius:8px;padding:9px;">
+                                <div style="font-family:'DM Mono',monospace;font-size:.92rem;color:#1db87d;">@d.PTAFeesApprovedCount</div>
+                                <div style="font-size:.68rem;color:#9099be;">Approved</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div style="background:#fef4d3;border-radius:8px;padding:9px;">
+                                <div style="font-family:'DM Mono',monospace;font-size:.92rem;color:#c4860e;">@d.PTAFeesPendingCount</div>
+                                <div style="font-size:.68rem;color:#9099be;">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other Payments -->
+        <div class="col-md-4">
+            <div class="panel h-100">
+                <div class="panel-head">
+                    <span class="panel-title"><i class="bi bi-wallet2 me-1" style="color:#a855f7;"></i> Other Payments</span>
+                    <a asp-page="/admin/other-payments/other-payments-report" class="panel-action">Report →</a>
+                </div>
+                <div class="p-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.82rem;color:#7b82a8;">Collected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:#1db87d;">@("₦" + d.OtherPaymentsCollected.ToString("N0"))</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span style="font-size:.82rem;color:#7b82a8;">Awaiting Approval</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:#c4860e;">@("₦" + d.OtherPaymentsPending.ToString("N0"))</span>
+                    </div>
+                    <div class="row g-2 text-center mt-1">
+                        <div class="col-6">
+                            <div style="background:#e6faf4;border-radius:8px;padding:9px;">
+                                <div style="font-family:'DM Mono',monospace;font-size:.92rem;color:#1db87d;">@d.OtherPaymentsApprovedCount</div>
+                                <div style="font-size:.68rem;color:#9099be;">Approved</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div style="background:#fef4d3;border-radius:8px;padding:9px;">
+                                <div style="font-family:'DM Mono',monospace;font-size:.92rem;color:#c4860e;">@d.OtherPaymentsPendingCount</div>
+                                <div style="font-size:.68rem;color:#9099be;">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Status Overview + Revenue Breakdown -->
+    <div class="row g-3 mb-3">
+        <!-- Payment Approval Status -->
         <div class="col-lg-5">
             <div class="panel h-100">
                 <div class="panel-head">
-                    <span class="panel-title">Weekly Attendance</span>
-                    <a href="#" class="panel-action">View Full →</a>
+                    <span class="panel-title">Payment Approval Status</span>
                 </div>
                 <div class="p-4">
-                    <div class="d-flex align-items-end justify-content-between mb-3">
-                        <div>
-                            <div style="font-family:'DM Mono',monospace;font-size:2.2rem;color:var(--navy);line-height:1;">92.4%</div>
-                            <div style="font-size:.78rem;color:#7b82a8;margin-top:2px;">Avg this week</div>
+                    @{
+                        int totalTxns = d.TotalApprovedPayments + d.TotalPendingPayments + d.TotalRejectedPayments;
+                        decimal approvedPct = totalTxns > 0 ? Math.Round((decimal)d.TotalApprovedPayments / totalTxns * 100, 1) : 0;
+                        decimal pendingPct = totalTxns > 0 ? Math.Round((decimal)d.TotalPendingPayments / totalTxns * 100, 1) : 0;
+                        decimal rejectedPct = totalTxns > 0 ? Math.Round((decimal)d.TotalRejectedPayments / totalTxns * 100, 1) : 0;
+                    }
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span style="font-size:.82rem;color:#2d3461;font-weight:600;"><i class="bi bi-check-circle-fill me-1" style="color:#1db87d;"></i>Approved</span>
+                            <span style="font-family:'DM Mono',monospace;font-size:.82rem;">@d.TotalApprovedPayments txn · @approvedPct%</span>
                         </div>
-                        <span class="tag tag-present"><i class="bi bi-arrow-up-short"></i> +1.2% vs last week</span>
-                    </div>
-                    <div class="mini-chart mb-2">
-                        <div class="mini-bar" style="height:65%;" title="Mon"></div>
-                        <div class="mini-bar" style="height:80%;" title="Tue"></div>
-                        <div class="mini-bar" style="height:55%;" title="Wed"></div>
-                        <div class="mini-bar active" style="height:92%;" title="Thu"></div>
-                        <div class="mini-bar active" style="height:88%;" title="Fri"></div>
-                        <div class="mini-bar" style="height:30%;" title="Sat"></div>
-                        <div class="mini-bar" style="height:20%;" title="Sun"></div>
-                    </div>
-                    <div class="d-flex justify-content-between" style="font-size:.68rem;color:#9099be;letter-spacing:.5px;">
-                        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                    </div>
-                    <div class="row g-2 mt-3">
-                        <div class="col-4 text-center">
-                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:#1db87d;font-weight:500;">1,184</div>
-                            <div style="font-size:.7rem;color:#9099be;">Present</div>
-                        </div>
-                        <div class="col-4 text-center">
-                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--rose);font-weight:500;">68</div>
-                            <div style="font-size:.7rem;color:#9099be;">Absent</div>
-                        </div>
-                        <div class="col-4 text-center">
-                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:#c4860e;font-weight:500;">32</div>
-                            <div style="font-size:.7rem;color:#9099be;">Late</div>
+                        <div class="bar-track" style="height:9px;">
+                            <div class="bar-fill" style="width:@(approvedPct)%;background:#1db87d;"></div>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span style="font-size:.82rem;color:#2d3461;font-weight:600;"><i class="bi bi-hourglass-split me-1" style="color:#c4860e;"></i>Pending</span>
+                            <span style="font-family:'DM Mono',monospace;font-size:.82rem;">@d.TotalPendingPayments txn · @pendingPct%</span>
+                        </div>
+                        <div class="bar-track" style="height:9px;">
+                            <div class="bar-fill" style="width:@(pendingPct)%;background:#c4860e;"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span style="font-size:.82rem;color:#2d3461;font-weight:600;"><i class="bi bi-x-circle-fill me-1" style="color:var(--rose);"></i>Rejected</span>
+                            <span style="font-family:'DM Mono',monospace;font-size:.82rem;">@d.TotalRejectedPayments txn · @rejectedPct%</span>
+                        </div>
+                        <div class="bar-track" style="height:9px;">
+                            <div class="bar-fill" style="width:@(rejectedPct)%;background:var(--rose);"></div>
+                        </div>
+                    </div>
+                    <div style="font-size:.72rem;color:#9099be;margin-top:6px;">Total transactions: @totalTxns</div>
                 </div>
             </div>
         </div>
 
-        <!-- Subject Performance -->
+        <!-- Revenue by Payment Type -->
         <div class="col-lg-7">
             <div class="panel h-100">
                 <div class="panel-head">
-                    <span class="panel-title">Subject Performance (Avg Score)</span>
-                    <a href="#" class="panel-action">Details →</a>
+                    <span class="panel-title">Revenue Breakdown by Type</span>
                 </div>
                 <div class="p-4">
+                    @{
+                        decimal grandCollected = d.TermlyFeesCollected + d.PTAFeesCollected + d.OtherPaymentsCollected;
+                        decimal termlyPct2 = grandCollected > 0 ? Math.Round(d.TermlyFeesCollected / grandCollected * 100, 1) : 0;
+                        decimal ptaPct2 = grandCollected > 0 ? Math.Round(d.PTAFeesCollected / grandCollected * 100, 1) : 0;
+                        decimal otherPct2 = grandCollected > 0 ? Math.Round(d.OtherPaymentsCollected / grandCollected * 100, 1) : 0;
+                    }
                     <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">Mathematics</span><span class="bar-val">74%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:74%;background:#3b82f6;"></div></div>
+                        <div class="bar-info">
+                            <span class="bar-name"><i class="bi bi-cash-coin me-1" style="color:var(--sky);"></i>School Fees</span>
+                            <span class="bar-val">@("₦" + d.TermlyFeesCollected.ToString("N0"))</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill" style="width:@(termlyPct2)%;background:var(--sky);"></div></div>
                     </div>
                     <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">English Language</span><span class="bar-val">81%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:81%;background:var(--mint);"></div></div>
-                    </div>
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">Basic Science</span><span class="bar-val">68%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:68%;background:var(--rose);"></div></div>
-                    </div>
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">Social Studies</span><span class="bar-val">79%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:79%;background:var(--gold);"></div></div>
-                    </div>
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">ICT / Computer</span><span class="bar-val">88%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:88%;background:#a855f7;"></div></div>
+                        <div class="bar-info">
+                            <span class="bar-name"><i class="bi bi-people me-1" style="color:var(--gold);"></i>PTA Levy</span>
+                            <span class="bar-val">@("₦" + d.PTAFeesCollected.ToString("N0"))</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill" style="width:@(ptaPct2)%;background:var(--gold);"></div></div>
                     </div>
                     <div class="subject-bar mb-0">
-                        <div class="bar-info"><span class="bar-name">Civic Education</span><span class="bar-val">72%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--sky);"></div></div>
+                        <div class="bar-info">
+                            <span class="bar-name"><i class="bi bi-wallet2 me-1" style="color:#a855f7;"></i>Other Payments</span>
+                            <span class="bar-val">@("₦" + d.OtherPaymentsCollected.ToString("N0"))</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill" style="width:@(otherPct2)%;background:#a855f7;"></div></div>
+                    </div>
+                    <div class="mt-4 pt-3" style="border-top:1px solid #eef0fb;">
+                        <div class="d-flex justify-content-between">
+                            <span style="font-size:.82rem;font-weight:600;color:#2d3461;">Grand Total Collected</span>
+                            <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:#1db87d;font-weight:600;">@("₦" + grandCollected.ToString("N0"))</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span style="font-size:.82rem;font-weight:600;color:#2d3461;">Total Outstanding</span>
+                            <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:var(--rose);font-weight:600;">@("₦" + d.GrandTotalOutstanding.ToString("N0"))</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Students Table + Upcoming Events -->
+    <!-- Recent Payment Transactions -->
     <div class="row g-3 mb-3">
-        <div class="col-lg-8">
+        <div class="col-12">
             <div class="panel">
                 <div class="panel-head">
-                    <span class="panel-title">Recent Student Activity</span>
-                    <a href="#" class="panel-action">All Students →</a>
+                    <span class="panel-title">Recent Payment Transactions</span>
+                    <a asp-page="/admin/feesmanager/fees-payment/index" class="panel-action">All Payments →</a>
                 </div>
-                <div class="table-responsive">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Class</th>
-                                <th>Subject</th>
-                                <th>Last Score</th>
-                                <th>Attendance</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#e8f0ff;color:#3b5bdb;">AO</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Adaeze Okonkwo</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00124</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>JSS 3B</td>
-                                <td>Mathematics</td>
-                                <td><span style="font-family:'DM Mono',monospace;">87/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">96%</span></td>
-                                <td><span class="tag tag-present">Present</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#fff0f2;color:#e84d6a;">CB</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Chukwuemeka Bello</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00115</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>SS 2A</td>
-                                <td>Physics</td>
-                                <td><span style="font-family:'DM Mono',monospace;">62/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">78%</span></td>
-                                <td><span class="tag tag-late">Late</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#e6faf4;color:#1db87d;">FI</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Fatimah Ibrahim</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00098</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>SS 1C</td>
-                                <td>Chemistry</td>
-                                <td><span style="font-family:'DM Mono',monospace;">91/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">100%</span></td>
-                                <td><span class="tag tag-present">Present</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#fef4d3;color:#c4860e;">TN</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Tunde Nwachukwu</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00076</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>JSS 2A</td>
-                                <td>English</td>
-                                <td><span style="font-family:'DM Mono',monospace;">55/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">60%</span></td>
-                                <td><span class="tag tag-absent">Absent</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#f0e8ff;color:#a855f7;">KA</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Kemi Adeyemi</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00143</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>SS 3B</td>
-                                <td>Biology</td>
-                                <td><span style="font-family:'DM Mono',monospace;">78/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">89%</span></td>
-                                <td><span class="tag tag-present">Present</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Upcoming Events -->
-        <div class="col-lg-4">
-            <div class="panel h-100">
-                <div class="panel-head">
-                    <span class="panel-title">Upcoming Events</span>
-                    <a href="#" class="panel-action">Calendar →</a>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">28</div><div class="month">Mar</div></div>
-                    <div class="event-divider" style="background:var(--sky);"></div>
-                    <div><div class="event-title">Mid-Term Examinations Begin</div><div class="event-meta"><i class="bi bi-clock"></i> 8:00 AM · All Classes</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">01</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:var(--gold);"></div>
-                    <div><div class="event-title">Parent-Teacher Meeting</div><div class="event-meta"><i class="bi bi-people"></i> 10:00 AM · Hall A</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">05</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:var(--mint);"></div>
-                    <div><div class="event-title">Inter-House Sports Day</div><div class="event-meta"><i class="bi bi-trophy"></i> 7:30 AM · Field</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">12</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:var(--rose);"></div>
-                    <div><div class="event-title">Second Term Ends</div><div class="event-meta"><i class="bi bi-flag-fill"></i> End of Term</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">20</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:#a855f7;"></div>
-                    <div><div class="event-title">Third Term Resumption</div><div class="event-meta"><i class="bi bi-door-open"></i> 7:45 AM · All</div></div>
-                </div>
+                @if (!d.RecentPayments.Any())
+                {
+                    <div class="p-4 text-center" style="color:#9099be;font-size:.85rem;">
+                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>No payment transactions recorded yet.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Class</th>
+                                    <th>Type</th>
+                                    <th>Invoice</th>
+                                    <th>Amount</th>
+                                    <th>State</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var p in d.RecentPayments)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @{
+                                                    var initials = string.Join("", (p.StudentName ?? "??").Split(' ').Take(2).Select(x => x.Length > 0 ? x[0].ToString() : "")).ToUpper();
+                                                    var colors = new[] { ("#e8f0ff","#3b5bdb"), ("#fff0f2","#e84d6a"), ("#e6faf4","#1db87d"), ("#fef4d3","#c4860e"), ("#f0e8ff","#a855f7") };
+                                                    var ci = Math.Abs((p.StudentName ?? "").GetHashCode()) % colors.Length;
+                                                }
+                                                <div class="student-ava" style="background:@colors[ci].Item1;color:@colors[ci].Item2;">@initials</div>
+                                                <div>
+                                                    <div style="font-weight:600;font-size:.84rem;">@p.StudentName</div>
+                                                    <div style="font-size:.7rem;color:#9099be;">@p.RegistrationNumber</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>@p.ClassName</td>
+                                        <td><span style="font-size:.78rem;background:#f3f4f8;padding:2px 8px;border-radius:5px;color:#2d3461;">@p.PaymentType</span></td>
+                                        <td><span style="font-family:'DM Mono',monospace;font-size:.78rem;color:#7b82a8;">@p.InvoiceNumber</span></td>
+                                        <td><span style="font-family:'DM Mono',monospace;font-weight:600;">₦@p.Amount.ToString("N0")</span></td>
+                                        <td>
+                                            @if (p.PaymentState == "Completed")
+                                            {
+                                                <span class="tag tag-present">Full</span>
+                                            }
+                                            else if (p.PaymentState == "PartPayment")
+                                            {
+                                                <span class="tag tag-late">Partial</span>
+                                            }
+                                            else
+                                            {
+                                                <span style="font-size:.75rem;color:#9099be;">@p.PaymentState</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (p.Status == "Approved")
+                                            {
+                                                <span class="tag tag-present">Approved</span>
+                                            }
+                                            else if (p.Status == "Pending")
+                                            {
+                                                <span class="tag tag-late">Pending</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="tag tag-absent">@p.Status</span>
+                                            }
+                                        </td>
+                                        <td style="font-size:.78rem;color:#9099be;white-space:nowrap;">@p.CreatedDate.ToString("dd MMM yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
         </div>
     </div>
 
-    <!-- Notices + Fee Summary -->
+    <!-- Overall Collection Summary -->
     <div class="row g-3">
         <div class="col-lg-6">
             <div class="panel">
                 <div class="panel-head">
-                    <span class="panel-title">Notice Board</span>
-                    <a href="#" class="panel-action">All Notices →</a>
+                    <span class="panel-title">Overall Fee Collection Summary</span>
+                    <a asp-page="/admin/feesmanager/fees-payment-report" class="panel-action">Full Report →</a>
                 </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#e8f4ff;color:#3b82f6;"><i class="bi bi-megaphone-fill"></i></div>
-                    <div>
-                        <div class="notice-title">Uniform Policy Update — Term 3</div>
-                        <div class="notice-date">Mar 26, 2026 · By Admin</div>
+                <div class="p-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Total Expected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:var(--navy);">₦@d.GrandTotalExpected.ToString("N0")</span>
                     </div>
-                </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#fef4d3;color:#c4860e;"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                    <div>
-                        <div class="notice-title">Fee Deadline: 31 March 2026</div>
-                        <div class="notice-date">Mar 24, 2026 · Finance Dept</div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Total Collected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:#1db87d;">₦@d.GrandTotalCollected.ToString("N0")</span>
                     </div>
-                </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#e6faf4;color:#1db87d;"><i class="bi bi-award-fill"></i></div>
-                    <div>
-                        <div class="notice-title">Best Student Award Nominations Open</div>
-                        <div class="notice-date">Mar 22, 2026 · Academic Office</div>
+                    <div class="bar-track mb-1" style="height:10px;">
+                        <div class="bar-fill" style="width:@(d.GrandCollectionPct)%;background:linear-gradient(90deg,var(--mint),#3b82f6);"></div>
                     </div>
-                </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#fff0f2;color:#e84d6a;"><i class="bi bi-shield-exclamation"></i></div>
-                    <div>
-                        <div class="notice-title">Security Alert: Gate Access Protocol</div>
-                        <div class="notice-date">Mar 20, 2026 · Security</div>
+                    <div style="font-size:.72rem;color:#9099be;margin-bottom:18px;">@d.GrandCollectionPct% collected · ₦@d.GrandTotalOutstanding.ToString("N0") outstanding</div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div style="background:#e6faf4;border-radius:10px;padding:12px;text-align:center;">
+                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#1db87d;">@d.TotalApprovedPayments</div>
+                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Approved</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:#fef4d3;border-radius:10px;padding:12px;text-align:center;">
+                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#c4860e;">@d.TotalPendingPayments</div>
+                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Pending</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:#fff0f2;border-radius:10px;padding:12px;text-align:center;">
+                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:var(--rose);">@d.TotalRejectedPayments</div>
+                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Rejected</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -343,41 +449,57 @@
         <div class="col-lg-6">
             <div class="panel">
                 <div class="panel-head">
-                    <span class="panel-title">Fee Collection Summary</span>
-                    <a href="#" class="panel-action">Finance →</a>
+                    <span class="panel-title">Finance Navigation</span>
                 </div>
-                <div class="p-4">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Total Expected</span>
-                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:var(--navy);">₦4,800,000</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Collected</span>
-                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:#1db87d;">₦4,176,000</span>
-                    </div>
-                    <div class="bar-track mb-1" style="height:10px;">
-                        <div class="bar-fill" style="width:87%;background:linear-gradient(90deg,var(--mint),#3b82f6);"></div>
-                    </div>
-                    <div style="font-size:.72rem;color:#9099be;margin-bottom:18px;">87% collected · ₦624,000 outstanding</div>
-
+                <div class="p-3">
                     <div class="row g-2">
-                        <div class="col-4">
-                            <div style="background:#e6faf4;border-radius:10px;padding:12px;text-align:center;">
-                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#1db87d;">842</div>
-                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Fully Paid</div>
-                            </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/feesmanager/fees-setup/Index" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-gear-fill" style="color:var(--sky);"></i>
+                                <span style="font-size:.82rem;font-weight:600;">Fees Setup</span>
+                            </a>
                         </div>
-                        <div class="col-4">
-                            <div style="background:#fef4d3;border-radius:10px;padding:12px;text-align:center;">
-                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#c4860e;">289</div>
-                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Partial</div>
-                            </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/feesmanager/fees-payment/index" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-receipt-cutoff" style="color:#1db87d;"></i>
+                                <span style="font-size:.82rem;font-weight:600;">Fee Payments</span>
+                            </a>
                         </div>
-                        <div class="col-4">
-                            <div style="background:#fff0f2;border-radius:10px;padding:12px;text-align:center;">
-                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:var(--rose);">153</div>
-                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Unpaid</div>
-                            </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/feesmanager/fees-payment-report" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-bar-chart-fill" style="color:var(--gold);"></i>
+                                <span style="font-size:.82rem;font-weight:600;">Fees Report</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/ptamanager/pta-fees-setup/Index" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-people-fill" style="color:var(--gold);"></i>
+                                <span style="font-size:.82rem;font-weight:600;">PTA Setup</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/ptamanager/pta-payment/index" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-cash-coin" style="color:#a855f7;"></i>
+                                <span style="font-size:.82rem;font-weight:600;">PTA Payments</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/ptamanager/pta-fees-report" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-file-earmark-bar-graph" style="color:#e84d6a;"></i>
+                                <span style="font-size:.82rem;font-weight:600;">PTA Report</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/other-payments/fees-payment/index" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-wallet2" style="color:var(--mint);"></i>
+                                <span style="font-size:.82rem;font-weight:600;">Other Payments</span>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a asp-page="/admin/other-payments/other-payments-report" class="d-flex align-items-center gap-2 p-2 rounded" style="background:#f3f4f8;text-decoration:none;color:#2d3461;">
+                                <i class="bi bi-file-earmark-text" style="color:#3b82f6;"></i>
+                                <span style="font-size:.82rem;font-weight:600;">Other Reports</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -386,5 +508,3 @@
     </div>
 
 </div><!-- /content-inner -->
-
-
