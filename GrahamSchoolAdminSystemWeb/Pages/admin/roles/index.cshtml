@@ -1,0 +1,179 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.roles.IndexModel
+@{
+    ViewData["Title"] = "Roles & Permissions";
+}
+
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="page-title mb-1">
+                <i class="bi bi-shield-lock-fill me-2"></i>Roles & Permissions
+            </h2>
+            <p class="text-muted mb-0">View system roles and their assigned permissions</p>
+        </div>
+        <a href="/admin/roles/userroles" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill me-2"></i>Manage User Roles
+        </a>
+    </div>
+</div>
+
+<!-- Info Alert -->
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    <strong>About Roles & Permissions:</strong> Roles define user job functions (Admin, Accountant, Cashier), while Permissions control specific actions (Create, Edit, Delete, View). Users can have multiple roles.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<!-- Roles Grid -->
+<div class="row g-4">
+    @foreach (var role in Model.RolesWithPermissions)
+    {
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        @if (role.RoleName == "Admin")
+                        {
+                            <i class="bi bi-shield-fill-check me-2"></i>
+                        }
+                        else if (role.RoleName == "Accountant")
+                        {
+                            <i class="bi bi-calculator-fill me-2"></i>
+                        }
+                        else if (role.RoleName == "Cashier")
+                        {
+                            <i class="bi bi-cash-coin me-2"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-person-badge-fill me-2"></i>
+                        }
+                        @role.RoleName
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">Permissions:</h6>
+                    
+                    @if (role.Permissions.Any())
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var permission in role.Permissions)
+                            {
+                                <div class="permission-badge">
+                                    @if (permission == "Create")
+                                    {
+                                        <i class="bi bi-plus-circle-fill text-success me-2"></i>
+                                    }
+                                    else if (permission == "Edit")
+                                    {
+                                        <i class="bi bi-pencil-fill text-primary me-2"></i>
+                                    }
+                                    else if (permission == "Delete")
+                                    {
+                                        <i class="bi bi-trash-fill text-danger me-2"></i>
+                                    }
+                                    else if (permission == "View")
+                                    {
+                                        <i class="bi bi-eye-fill text-info me-2"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                    }
+                                    <strong>@permission</strong>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted fst-italic mb-0">No permissions assigned</p>
+                    }
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check me-1"></i>
+                        @role.Permissions.Count permission(s)
+                    </small>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Permissions Reference Table -->
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check me-2"></i>All System Permissions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Permission</th>
+                        <th>Description</th>
+                        <th class="text-center">Icon</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var permission in Model.AllPermissions)
+                    {
+                        <tr>
+                            <td><strong>@permission.Name</strong></td>
+                            <td>@permission.Description</td>
+                            <td class="text-center">
+                                @if (permission.Name == "Create")
+                                {
+                                    <i class="bi bi-plus-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                }
+                                else if (permission.Name == "Edit")
+                                {
+                                    <i class="bi bi-pencil-fill text-primary" style="font-size: 1.5rem;"></i>
+                                }
+                                else if (permission.Name == "Delete")
+                                {
+                                    <i class="bi bi-trash-fill text-danger" style="font-size: 1.5rem;"></i>
+                                }
+                                else if (permission.Name == "View")
+                                {
+                                    <i class="bi bi-eye-fill text-info" style="font-size: 1.5rem;"></i>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .permission-badge {
+        padding: 0.5rem 0.75rem;
+        background-color: var(--bs-light);
+        border-radius: 0.375rem;
+        border-left: 3px solid var(--gold);
+        display: flex;
+        align-items: center;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #1a2b6d 0%, #0b1437 100%);
+        color: white;
+        padding: 1.25rem;
+    }
+
+    .card-footer {
+        border-top: 2px solid var(--gold);
+    }
+
+    .page-title {
+        color: var(--navy);
+        font-weight: 700;
+    }
+</style>

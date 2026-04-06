@@ -1,0 +1,30 @@
+{
+  "version": "3.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "twitter-bootstrap@5.3.8",
+      "destination": "wwwroot/lib/twitter-bootstrap/"
+    },
+    {
+      "library": "bootstrap-icons@1.13.1",
+      "destination": "wwwroot/lib/bootstrap-icons/"
+    },
+    {
+      "library": "select2@4.0.13",
+      "destination": "wwwroot/lib/select2/"
+    },
+    {
+      "library": "flatpickr@4.6.13",
+      "destination": "wwwroot/lib/flatpickr/"
+    },
+    {
+      "library": "sweetalert2@11.23.0",
+      "destination": "wwwroot/lib/sweetalert2/"
+    },
+    {
+      "library": "jquery.blockUI@2.70",
+      "destination": "wwwroot/lib/jquery.blockUI/"
+    }
+  ]
+}

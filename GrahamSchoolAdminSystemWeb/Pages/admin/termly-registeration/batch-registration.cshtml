@@ -1,0 +1,169 @@
+﻿@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration.batch_registrationModel
+@{
+    ViewData["Title"] = "Students Batch registration";
+}
+@section Sheets {
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DatatablesSheetFiles" />
+}
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-list-check"></i> Students Batch Registration
+        </h1>
+        <p class="text-white-50">Multiple students registrations</p>
+    </div>
+    <div class="header-actions">
+        <div class="btn-group">
+            <a asp-page="index" class="btn btn-primary"><i class="bi bi-arrow-left me-2"></i> Back</a>
+        </div>
+    </div>
+</div>
+<div class="page-content">
+    <!-- Success Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Error Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    <!-- Filters -->
+    <form method="post" asp-page-handler="Search">
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <label for="term" class="form-label">Term</label>
+                <select class="form-select" asp-for="Selectsearch.term" required asp-items="@Model.Selections.Terms">
+                    <option value="">---Select Term---</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="session" class="form-label">Academic Session</label>
+                <select class="form-select" asp-for="Selectsearch.sessionid" required asp-items="@Model.Selections.AcademicSession">
+                    <option value="">---Select Session---</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="schoolclass" class="form-label">Class</label>
+                <select class="form-select" asp-for="Selectsearch.schoolclass" required asp-items="@Model.Selections.SchoolClasses">
+                    <option value="">---Select Class---</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="subclass" class="form-label">Sub Class</label>
+                <select class="form-select" required asp-for="Selectsearch.subclass" asp-items="@Model.Selections.SubClass">
+                    <option value="">---Select Sub Class---</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success mt-4"><i class="bi bi-search"></i></button>
+            </div>
+        </div>
+    </form>
+
+    <!-- DataTable Container -->
+    @if(Model.TermReg.Any())
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="h4 mb-2">New Term Registration</div>
+                <form method="post" asp-page-handler="Register">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label for="term" class="form-label">Term</label>
+                            <select class="form-select" asp-for="termRegBatch.data.term" required asp-items="@Model.Selections.Terms">
+                                <option value="">---Select Term---</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="session" class="form-label">Academic Session</label>
+                            <select class="form-select" asp-for="termRegBatch.data.sessionid" required asp-items="@Model.Selections.AcademicSession">
+                                <option value="">---Select Session---</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="schoolclass" class="form-label">Class</label>
+                            <select class="form-select" asp-for="termRegBatch.data.schoolclass" required asp-items="@Model.Selections.SchoolClasses">
+                                <option value="">---Select Class---</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="subclass" class="form-label">Sub Class</label>
+                            <select class="form-select" asp-for="termRegBatch.data.subclass" required asp-items="@Model.Selections.SubClass">
+                                <option value="">---Select Sub Class---</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="datatable-container">
+                        <table id="studentsTermRegTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Full Name</th>
+                                    <th>Reg. Number</th>
+                                    <th>Term</th>
+                                    <th>Session</th>
+                                    <th>Class</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.TermReg.Count; i++)
+                                {
+                                    <tr>
+                                        <td>@(i + 1)</td>
+                                        <td>@Model.TermReg[i].Student.Surname @Model.TermReg[i].Student.Othername @Model.TermReg[i].Student.Firstname</td>
+                                        <td>@Model.TermReg[i].Student.ApplicationUser.UserName</td>
+                                        <td>@Model.TermReg[i].Term</td>
+                                        <td>@Model.TermReg[i].SessionYear.Name</td>
+                                        <td>@Model.TermReg[i].SchoolClass.Name - @Model.TermReg[i].SchoolSubClass.Name</td>
+                                        <td>@Model.TermReg[i].CreatedDate</td>
+                                        <td>
+                                            <input type="hidden" name="termRegBatch.studentsid[@i]" value="@Model.TermReg[i].StudentId" />
+                                            
+                                            <button type="button" class="btn btn-danger btn-sm delete-row">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="submit" class="btn btn-primary" asp-page-handler="Register">Register All</button>
+                </form>
+
+            </div>
+</div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on('click', '.delete-row', function () {
+            var row = $(this).closest('tr');
+            row.remove();
+            reIndexInputs();
+        });
+
+        function reIndexInputs() {
+            $('#studentsTermRegTable tbody tr').each(function (index) {
+                $(this).find('input[type="hidden"]').attr('name', `termRegBatch.studentsid[${index}]`);
+            });
+        }
+    </script>
+}

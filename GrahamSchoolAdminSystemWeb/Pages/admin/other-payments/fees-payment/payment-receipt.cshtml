@@ -1,0 +1,321 @@
+﻿@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.other_payments.fees_payment.payment_receiptModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Payment Receipt";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/lib/twitter-bootstrap/css/bootstrap.min.css">
+    <style>
+        .invoice-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            border-bottom: 3px solid #0d6efd;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .invoice-header .company-info h2 {
+            margin: 0;
+            color: #0d6efd;
+            font-size: 24px;
+        }
+
+        .invoice-header .company-info p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .invoice-header .invoice-info {
+            text-align: right;
+        }
+
+        .invoice-header .invoice-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .invoice-info-label {
+            font-weight: 600;
+            color: #0d6efd;
+        }
+
+        .invoice-section {
+            margin-bottom: 30px;
+        }
+
+        .invoice-section h3 {
+            border-left: 4px solid #0d6efd;
+            padding-left: 15px;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: #555;
+            min-width: 150px;
+        }
+
+        .info-item span {
+            color: #333;
+        }
+
+        .payment-summary {
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        .amount-display {
+            font-size: 32px;
+            font-weight: bold;
+            color: #0d6efd;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-approved {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .status-rejected {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .status-cancelled {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .action-buttons {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .action-buttons button {
+            margin: 0 10px;
+        }
+
+        @@media print {
+            body {
+                background: white;
+            }
+            .invoice-container {
+                box-shadow: none;
+            }
+            .action-buttons {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="invoice-container mt-4 mb-4">
+        <div class="invoice-header">
+            <div class="company-info">
+                <h2>Payment Receipt</h2>
+                <p>Graham School Admin System</p>
+            </div>
+            <div class="invoice-info">
+                <p><span class="invoice-info-label">Receipt #:</span> @Model.Invoice.InvoiceNumber</p>
+                <p><span class="invoice-info-label">Date:</span> @Model.Invoice.InvoiceDate</p>
+            </div>
+        </div>
+
+        <div class="invoice-section">
+            <h3><i class="bi bi-person"></i> Student Information</h3>
+            <div class="info-row">
+                <div class="info-item">
+                    <label>Full Name:</label>
+                    <span>@Model.Invoice.StudentName</span>
+                </div>
+                <div class="info-item">
+                    <label>Reg. Number:</label>
+                    <span>@Model.Invoice.StudentRegNumber</span>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-item">
+                    <label>Class:</label>
+                    <span>@Model.Invoice.ClassName</span>
+                </div>
+                <div class="info-item">
+                    <label>Academic Session:</label>
+                    <span>@Model.Invoice.SessionName</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="invoice-section">
+            <h3><i class="bi bi-receipt"></i> Payment Details</h3>
+            <div class="payment-summary">
+                <div class="info-row">
+                    <div class="info-item">
+                        <label>Payment Item:</label>
+                        <span>@Model.Invoice.PaymentItemName</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Payment Reference:</label>
+                        <span>@(Model.Invoice.PaymentReference ?? "N/A")</span>
+                    </div>
+                </div>
+
+                <!-- Payment Summary Table -->
+                <div style="margin-top: 25px; padding: 20px; background: #f0f7ff; border-left: 4px solid #0d6efd; border-radius: 4px;">
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; font-size: 15px;">
+                        <span style="font-weight: 600; color: #0d6efd;">Payment Breakdown</span>
+                    </div>
+
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; font-size: 14px;">
+                        <span>Total Amount for Item:</span>
+                        <span style="font-weight: 500;">@(SD.ToNaira(Model.Invoice.TotalFees))</span>
+                    </div>
+
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; font-size: 14px;">
+                        <span>Previous Payments:</span>
+                        <span style="font-weight: 500;">@(SD.ToNaira(Model.Invoice.PreviousPayments))</span>
+                    </div>
+
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; font-size: 14px;">
+                        <span>Previous Balance:</span>
+                        <span style="font-weight: 500; color: @(Model.Invoice.PreviousBalance > 0 ? "#dc3545" : "#666");">@(SD.ToNaira(Model.Invoice.PreviousBalance))</span>
+                    </div>
+
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; font-size: 14px; border-top: 2px dashed #dee2e6; padding-top: 12px; border-bottom: 2px solid #0d6efd; padding-bottom: 12px;">
+                        <span style="font-weight: 600;">Current Payment (This Transaction):</span>
+                        <span style="font-weight: 600; color: #28a745; font-size: 16px;">@(SD.ToNaira(Model.Invoice.AmountPaid))</span>
+                    </div>
+
+                    <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 16px; font-weight: 600; color: @(Model.Invoice.NewBalance > 0 ? "#dc3545" : "#28a745");">
+                        <span>Remaining Balance:</span>
+                        <span>@(SD.ToNaira(Model.Invoice.NewBalance))</span>
+                    </div>
+
+                    @if (Model.Invoice.NewBalance == 0)
+                    {
+                        <div style="margin-top: 12px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724; text-align: center; font-weight: 600;">
+                            ✓ Item Fully Paid
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="margin-top: 12px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404; text-align: center; font-weight: 600;">
+                            Partial Payment - Balance Outstanding
+                        </div>
+                    }
+                </div>
+
+                <div class="info-row" style="margin-top: 20px;">
+                    <div class="info-item">
+                        <label>Payment Channel:</label>
+                        <span>@Model.Invoice.PaymentChannel</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Status:</label>
+                        <span>
+                            @{
+                                var statusClass = Model.Invoice.Status?.ToLower() switch
+                                {
+                                    "pending" => "status-pending",
+                                    "approved" => "status-approved",
+                                    "rejected" => "status-rejected",
+                                    "cancelled" => "status-cancelled",
+                                    _ => "status-pending"
+                                };
+                            }
+                            <span class="status-badge @statusClass">@Model.Invoice.Status</span>
+                        </span>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Invoice.Notes))
+                {
+                    <div class="info-row" style="margin-top: 15px;">
+                        <div class="info-item">
+                            <label>Notes:</label>
+                            <span>@Model.Invoice.Notes</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>This is an automated receipt generated by Graham School Admin System.</strong></p>
+            <p>For queries or concerns about this payment, please contact the Finance Office.</p>
+            <p style="margin-top: 20px; color: #999; font-size: 11px;">Generated on @DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm:ss") UTC</p>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print Receipt
+            </button>
+            <a href="@Url.Page("index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Payments
+            </a>
+        </div>
+    </div>
+
+    <script src="~/lib/twitter-bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

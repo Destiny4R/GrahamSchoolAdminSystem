@@ -1,0 +1,383 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.ptamanager.pta_fees_setup.IndexModel
+@{
+    ViewData["Title"] = "PTA Fees Setup - Graham School Admin System";
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DatatablesSheetFiles" />
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+}
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-cash-coin"></i> PTA Fees Setup Management
+        </h1>
+        <p class="text-white">Manage PTA fees for school classes</p>
+    </div>
+    <div class="header-actions">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ptaFeesSetupModal" onclick="resetForm()">
+            <i class="bi bi-plus-circle me-2"></i>Add PTA Fees Setup
+        </button>
+    </div>
+</div>
+
+<div class="page-content">
+    <!-- Success Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Error Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- DataTable Container -->
+    <div class="datatable-container">
+        <table id="ptaFeesSetupTable" class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Term</th>
+                    <th>Academic Session</th>
+                    <th>Class</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add PTA Fees Setup Modal -->
+<div class="modal fade" id="ptaFeesSetupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-cash-coin me-2"></i><span id="modalTitle">Add PTA Fees Setup</span>
+                    </h5>
+                    <small>Create new PTA fees set up information</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.SchoolClassId">
+                            <i class="bi bi-building me-1"></i>School Class <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="schoolClassId" asp-for="PTAFeesSetupModel.SchoolClassId" required asp-items="@Model.Selections.SchoolClasses">
+                            <option selected>-- Select a class --</option>
+                        </select>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.SchoolClassId"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.SessionId">
+                            <i class="bi bi-calendar-event me-1"></i>Academic Session <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" asp-for="PTAFeesSetupModel.SessionId" required asp-items="@Model.Selections.AcademicSession">
+                            <option disabled selected>-- Select a session --</option>
+                        </select>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.SessionId"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.Term">
+                            <i class="bi bi-hourglass-split me-1"></i>Term <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" asp-for="PTAFeesSetupModel.Term" required asp-items="@Model.Selections.Terms">
+                            <option disabled selected>-- Select a term --</option>
+                        </select>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.Term"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.Amount">
+                            <i class="bi bi-currency-dollar me-1"></i>Amount <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" asp-for="PTAFeesSetupModel.Amount"
+                               placeholder="Enter PTA fee amount" step="0.01" min="0" required>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.Amount"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i><span id="submitBtnText">Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit PTA Fees Setup Modal -->
+<div class="modal fade" id="ptaFeesSetupEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-cash-coin me-2"></i><span id="modalTitle">Edit PTA Fees Setup</span>
+                    </h5>
+                    <small>Update PTA fees set up information</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                        <input type="hidden" asp-for="PTAFeesSetupModel.Id" />
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.SchoolClassId">
+                            <i class="bi bi-building me-1"></i>School Class <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="schoolClassId" asp-for="PTAFeesSetupModel.SchoolClassId" required asp-items="@Model.Selections.SchoolClasses">
+                            <option selected>-- Select a class --</option>
+                        </select>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.SchoolClassId"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.SessionId">
+                            <i class="bi bi-calendar-event me-1"></i>Academic Session <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" asp-for="PTAFeesSetupModel.SessionId" required asp-items="@Model.Selections.AcademicSession">
+                            <option disabled selected>-- Select a session --</option>
+                        </select>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.SessionId"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.Term">
+                            <i class="bi bi-hourglass-split me-1"></i>Term <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" asp-for="PTAFeesSetupModel.Term" required asp-items="@Model.Selections.Terms">
+                            <option disabled selected>-- Select a term --</option>
+                        </select>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.Term"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="PTAFeesSetupModel.Amount">
+                            <i class="bi bi-currency-dollar me-1"></i>Amount <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" asp-for="PTAFeesSetupModel.Amount"
+                               placeholder="Enter PTA fee amount" step="0.01" min="0" required>
+                        <span class="invalid-feedback" asp-validation-for="PTAFeesSetupModel.Amount"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i><span id="submitBtnText">Update</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <partial name="_DatatablesScriptsFiles" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/js/appmain.js"></script>
+    <script>
+        var ptaFeesSetupTable;
+        var editingId = null;
+
+        $(function () {
+            // Initialize DataTable
+            ptaFeesSetupTable = $("#ptaFeesSetupTable").DataTable({
+                serverSide: true,
+                processing: true,
+                searching: true,
+                paging: true,
+                info: true,
+                responsive: true,
+                language: {
+                    processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>'
+                },
+                ajax: {
+                    url: "/home/GetPTAFeesSetup",
+                    type: "POST",
+                    data: function (d) {
+                        d.searchTerm = $(".dataTables_filter input").val();
+                    }
+                },
+                columns: [                
+                    {
+                        data: null, orderable: false, searchable: false, autoWidth: true,
+                        render: function (data, type, row, meta) {
+                            return meta.settings._iDisplayStart + meta.row + 1;
+                        }
+                    },
+                    { data: "term1","autoWidth": true, },
+                    { data: "sessionname", "autoWidth": true, },
+                    { data: "classname", "autoWidth": true, },
+                    {
+                        data: "amount1", "autoWidth": true,
+                        render: function (data) {
+                            return  data;
+                        }
+                    },
+                    {
+                        "data": "createdate", "autoWidth": true,
+                        render: function (data, type, row) {
+                            if (data != null) {
+                                var hours = new Date(data).getHours()
+                                let ap = hours >= 12 ? 'pm' : 'am';
+                                return data = data.toLocaleString('YYYY-MM-dd').slice(0, 19).replace('T', ' ') + ' ' + ap;
+                            } else {
+                                return "null";
+                            }
+                        }
+                    },
+                    {
+                        data: "id", "autoWidth": true,
+                        render: function (data) {
+                              return `
+                                <div class="">
+                                  <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                  </button>
+                                  <ul class="dropdown-menu">
+                                    <li><button type="button" class="dropdown-item" onclick="editPTAFeesSetup(${data})" title="Edit">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </button></li>
+                                    <li><button type="button" class="dropdown-item" onclick="deletePTAFeesSetup(${data})"><i class="bi bi-trash me-2"></i>Delete</button></li>
+                                  </ul>
+                                </div>
+                                `;
+                        },
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                order: [[0, "desc"]],
+                language: {
+                    searchPlaceholder: "Search PTA fees setup..."
+                }
+            });
+        });
+
+        function resetForm() {
+            editingId = null;
+            document.querySelector('input[name="PTAFeesSetupModel.Id"]').value = "0";
+            document.querySelector('select[name="PTAFeesSetupModel.SchoolClassId"]').value = "";
+            document.querySelector('select[name="PTAFeesSetupModel.SessionId"]').value = "";
+            document.querySelector('select[name="PTAFeesSetupModel.Term"]').value = "";
+            document.querySelector('input[name="PTAFeesSetupModel.Amount"]').value = "";
+            document.getElementById("modalTitle").textContent = "Add PTA Fees Setup";
+            document.getElementById("submitBtnText").textContent = "Save";
+        }
+
+        function editPTAFeesSetup(id) {
+            $.ajax({
+                url: "/api/v1/ptasetuppayment/"+id,
+                type: "GET",
+                contentType: "application/json",
+                success: function (data) {
+                    if (data) {
+                        editingId = data.id;
+
+                        $('input[name="PTAFeesSetupModel.Id"]').val(data.id);
+                        $('select[name="PTAFeesSetupModel.SchoolClassId"]').val(data.schoolClassId);
+                        $('select[name="PTAFeesSetupModel.SessionId"]').val(data.sessionId);
+                        $('select[name="PTAFeesSetupModel.Term"]').val(data.term);
+                        $('input[name="PTAFeesSetupModel.Amount"]').val(data.amount);
+
+                        $("#modalTitle").text("Edit PTA Fees Setup");
+                        $("#submitBtnText").text("Update");
+
+                        var editModal = new bootstrap.Modal($("#ptaFeesSetupEditModal")[0]);
+                        editModal.show();
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error:", error);
+
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Failed to load PTA fees setup details"
+                    });
+                }
+            });
+        }
+
+        function deletePTAFeesSetup(id) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this action if there are no related payment records!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("@Url.Page("Index", "DeletePTAFeesSetup")?id=" + id, {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.succeeded) {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: "Deleted!",
+                                    text: data.message
+                                }).then(() => {
+                                    ptaFeesSetupTable.ajax.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: "error",
+                                    title: "Error",
+                                    text: data.message
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error:", error);
+                            Swal.fire({
+                                icon: "error",
+                                title: "Error",
+                                text: "Failed to delete PTA fees setup"
+                            });
+                        });
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,168 @@
+﻿@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.other_payments.payment_items.indexModel
+@{
+    ViewData["Title"] = "Academic Sessions - Graham School Admin System";
+}
+@section Sheets{
+<link rel="stylesheet" href="~/css/shared-components.css" />
+<link rel="stylesheet" href="~/css/admin-pages.css" />
+<partial name="_DatatablesSheetFiles" />
+}
+
+<div class="page-header">
+    <div>
+        <h3>
+            Other Payment Items List
+        </h3>
+        <p class="text-white">Manage other payment item (e.g., Books, Bus)</p>
+    </div>
+    <div class="header-actions">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal" onclick="AcademicSessionResetForm()">
+            <i class="bi bi-plus-circle me-2"></i>Add new item
+        </button>
+    </div>
+</div>
+
+<div class="page-content">
+    <!-- Success Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Error Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- DataTable Container -->
+    <div class="datatable-container mt-3">
+        <table id="otherItemsTable" class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th class="col-1">#</th>
+                    <th class="col-4">Name</th>
+                    <th class="col-4">Description</th>
+                    <th class="col-3">Created Date</th>
+                    <th class="col-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-calendar3-event me-2"></i>Add Payment Item
+                    </h5>
+                    <small>Manage new payment items (e.g., Books)</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label class="form-label" asp-for="viewModel.name">
+                                Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" asp-for="viewModel.name"
+                               placeholder="e.g., Books" maxlength="15" required>
+                            <span class="invalid-feedback" asp-validation-for="viewModel.name"></span>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label" asp-for="viewModel.description">
+                                Description <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" asp-for="viewModel.description" rows="3" maxlength="250" required></textarea>
+                                <span class="invalid-feedback" asp-validation-for="viewModel.description"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title">
+                            <i class="bi bi-pencil-square me-2"></i>Edit Other Payment Item
+                        </h5>
+                        <small>Update other payment item information</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post">
+                    <div class="modal-body">
+                        <input type="hidden" asp-for="viewModel.Id"  />
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="viewModel.name">
+                            Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" asp-for="viewModel.name"
+                                placeholder="e.g., Books" maxlength="15" required id="viewModelname">
+                            <span class="invalid-feedback" asp-validation-for="viewModel.name"></span>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label" asp-for="viewModel.description">
+                                Description <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" asp-for="viewModel.description" rows="3" id="viewModeldescription" maxlength="250" required></textarea>
+                            <span class="invalid-feedback" asp-validation-for="viewModel.description"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>Update
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.js"></script>
+    <script src="~/lib/jquery.blockui/jquery.blockui.min.js"></script>
+    <partial name="_DatatablesScriptsFiles" />
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable
+            
+        });
+    </script>
+}

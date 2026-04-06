@@ -1,0 +1,451 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.ptamanager.pta_payment.pta_payment_receiptModel
+@{
+    Layout = null;
+    ViewData["Title"] = "PTA Payment Invoice";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/lib/twitter-bootstrap/css/bootstrap.min.css">
+    <style>
+        .invoice-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            border-bottom: 3px solid #0d6efd;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .invoice-header .company-info h2 {
+            margin: 0;
+            color: #0d6efd;
+            font-size: 24px;
+        }
+
+        .invoice-header .company-info p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .invoice-header .invoice-info {
+            text-align: right;
+        }
+
+        .invoice-header .invoice-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .invoice-info-label {
+            font-weight: 600;
+            color: #0d6efd;
+        }
+
+        .invoice-section {
+            margin-bottom: 30px;
+        }
+
+        .invoice-section h3 {
+            border-left: 4px solid #0d6efd;
+            padding-left: 15px;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: #555;
+            min-width: 150px;
+        }
+
+        .info-item span {
+            color: #333;
+        }
+
+        .payment-summary {
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .summary-item.total {
+            border-top: 2px solid #dee2e6;
+            padding-top: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #0d6efd;
+        }
+
+        .summary-item.label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .payment-state-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
+        .payment-state-badge.partpayment {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .payment-state-badge.completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .payment-state-badge.cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .invoice-footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 2px solid #dee2e6;
+            margin-top: 30px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #dee2e6;
+        }
+
+        .btn-print {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-print:hover {
+            background-color: #218838;
+        }
+
+        .btn-download {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-download:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-back {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-back:hover {
+            background-color: #5a6268;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .invoice-number-display {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0d6efd;
+            font-family: monospace;
+        }
+
+        .payment-reference {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<style>
+    @@media print {
+        .action-buttons {
+            display: none;
+        }
+        .invoice-container {
+            box-shadow: none;
+            padding: 0;
+        }
+    }
+</style>
+<div class="page-content">
+    <div class="invoice-container">
+        <!-- Error Alert -->
+        @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+        {
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                @TempData["Error"]
+            </div>
+        }
+
+        @if (Model.Invoice != null)
+        {
+            <!-- Invoice Header -->
+            <div class="invoice-header">
+                <div class="company-info">
+                    <h2><i class="bi bi-building me-2"></i>Graham School</h2>
+                    <p>@Model.Invoice.SchoolContactInfo</p>
+                    <p>PTA Payment Management System</p>
+                </div>
+                <div class="invoice-info">
+                    <p>
+                        <span class="invoice-info-label">Invoice #:</span><br>
+                        <span class="invoice-number-display">@Model.Invoice.InvoiceNumber</span>
+                    </p>
+                    <p>
+                        <span class="invoice-info-label">Invoice Date:</span><br>
+                        <span>@Model.Invoice.InvoiceDate.ToString("dd MMMM yyyy")</span>
+                    </p>
+                    <p>
+                        <span class="invoice-info-label">Payment Reference:</span><br>
+                        <span class="payment-reference">@Model.Invoice.PaymentReference</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Student Information Section -->
+            <div class="invoice-section">
+                <h3><i class="bi bi-person-fill me-2"></i>Student Information</h3>
+                <div class="info-row">
+                    <div>
+                        <div class="info-item">
+                            <label>Name:</label>
+                            <span>@Model.Invoice.StudentName</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Registration No.:</label>
+                            <span>@Model.Invoice.StudentRegNumber</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Class:</label>
+                            <span>@Model.Invoice.StudentClass</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="info-item">
+                            <label>Term:</label>
+                            <span>@Model.Invoice.Term</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Session/Year:</label>
+                            <span>@Model.Invoice.Session</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Payment Date:</label>
+                            <span>@Model.Invoice.PaymentDate.ToString("dd MMMM yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Summary Section -->
+            <div class="invoice-section">
+                <h3><i class="bi bi-receipt me-2"></i>PTA Payment Summary</h3>
+                <div class="payment-summary">
+                    <div class="summary-item label">
+                        <span>PTA Fee Structure & Payments</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total PTA Fees:</span>
+                        <span>₦@Model.Invoice.TotalFees.ToString("N2")</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Previous Payments:</span>
+                        <span>₦@Model.Invoice.PreviousPayments.ToString("N2")</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Previous Balance:</span>
+                        <span>₦@Model.Invoice.PreviousBalance.ToString("N2")</span>
+                    </div>
+                    <div class="summary-item" style="border-top: 2px dashed #dee2e6; padding-top: 8px; margin-top: 8px;">
+                        <span>Current Payment:</span>
+                        <span style="font-weight: 600; color: #0d6efd;">₦@Model.Invoice.CurrentPayment.ToString("N2")</span>
+                    </div>
+                    <div class="summary-item total">
+                        <span>Remaining Balance:</span>
+                        <span>₦@Model.Invoice.NewBalance.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Status Section -->
+            <div class="invoice-section">
+                <h3><i class="bi bi-info-circle me-2"></i>Payment Status</h3>
+                <div class="info-row">
+                    <div>
+                        <div class="info-item">
+                            <label>Payment Status:</label>
+                            <span><span class="status-badge @Model.Invoice.PaymentStatus.ToLower()">@Model.Invoice.PaymentStatus</span></span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="info-item">
+                            <label>Payment State:</label>
+                            <span><span class="payment-state-badge @Model.Invoice.PaymentState.ToLower()">@Model.Invoice.PaymentState</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            @if (!string.IsNullOrEmpty(Model.Invoice.Narration) && Model.Invoice.Narration != "No additional notes")
+            {
+                <div class="invoice-section">
+                    <h3><i class="bi bi-chat-left-text me-2"></i>Notes & Comments</h3>
+                    <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 12px; border-radius: 4px;">
+                        @Model.Invoice.Narration
+                    </div>
+                </div>
+            }
+
+            <!-- Evidence Section -->
+            @if (!string.IsNullOrEmpty(Model.Invoice.EvidenceFileName))
+            {
+                <div class="invoice-section">
+                    <h3><i class="bi bi-file-earmark me-2"></i>Payment Evidence</h3>
+                    <div class="info-item">
+                        <label>Evidence File:</label>
+                        <span>@Model.Invoice.EvidenceFileName</span>
+                    </div>
+                </div>
+            }
+
+            <!-- Invoice Footer -->
+            <div class="invoice-footer">
+                <p>
+                    <strong>This is an electronically generated invoice. No signature is required.</strong><br>
+                    Generated on: @DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss")<br>
+                    Invoice Valid Period: 30 days from issue date
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn-print" onclick="window.print()">
+                    <i class="bi bi-printer me-2"></i>Print Invoice
+                </button>
+                <a href="?handler=Download&paymentId=@Model.Invoice.InvoiceId" class="btn-download">
+                    <i class="bi bi-download me-2"></i>Download as HTML
+                </a>
+                <a href="index" class="btn-back">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Payments
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                Payment record not found.
+            </div>
+            <div class="action-buttons">
+                <a href="index" class="btn-back">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Payments
+                </a>
+            </div>
+        }
+    </div>
+</div>
+</body>
+</html>

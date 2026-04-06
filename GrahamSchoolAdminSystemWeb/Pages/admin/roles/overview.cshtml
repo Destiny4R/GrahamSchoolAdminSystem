@@ -1,0 +1,322 @@
+@page
+@{
+    ViewData["Title"] = "System Overview";
+}
+
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <h2 class="page-title mb-1">
+        <i class="bi bi-diagram-3-fill me-2"></i>Roles & Permissions System Overview
+    </h2>
+    <p class="text-muted mb-0">Complete guide to the redesigned security architecture</p>
+</div>
+
+<!-- System Architecture -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-diagram-2-fill me-2"></i>System Architecture
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-4">
+                    <div class="architecture-diagram">
+                        <div class="arch-level">
+                            <div class="arch-box user-box">
+                                <i class="bi bi-person-circle"></i>
+                                <strong>User</strong>
+                                <small>(ApplicationUser)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="arch-arrow">↓ assigned to</div>
+                        
+                        <div class="arch-level">
+                            <div class="arch-box role-box">
+                                <i class="bi bi-shield-fill-check"></i>
+                                <strong>Roles</strong>
+                                <small>Admin, Accountant, Cashier</small>
+                            </div>
+                        </div>
+                        
+                        <div class="arch-arrow">↓ have</div>
+                        
+                        <div class="arch-level">
+                            <div class="arch-box permission-box">
+                                <i class="bi bi-key-fill"></i>
+                                <strong>Permissions</strong>
+                                <small>Create, Edit, Delete, View</small>
+                            </div>
+                        </div>
+                        
+                        <div class="arch-divider my-4"></div>
+                        
+                        <div class="arch-level">
+                            <div class="arch-box position-box">
+                                <i class="bi bi-briefcase-fill"></i>
+                                <strong>Position</strong>
+                                <small>(Decoupled - Job Title Only)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e8f4ff;">
+                <i class="bi bi-shield-fill-check" style="color: #3b82f6;"></i>
+            </div>
+            <div class="stat-content">
+                <h3>3</h3>
+                <p>System Roles</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #fef4d3;">
+                <i class="bi bi-key-fill" style="color: #c4860e;"></i>
+            </div>
+            <div class="stat-content">
+                <h3>4</h3>
+                <p>Permissions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e6faf4;">
+                <i class="bi bi-people-fill" style="color: #059669;"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Many</h3>
+                <p>Users</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #fff0f2;">
+                <i class="bi bi-briefcase-fill" style="color: #dc2626;"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Unlimited</h3>
+                <p>Positions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Links -->
+<div class="row g-4">
+    <div class="col-md-4">
+        <a href="/admin/roles/index" class="nav-card">
+            <div class="nav-card-icon">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h5>View Roles & Permissions</h5>
+            <p>See all system roles and their assigned permissions</p>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="/admin/roles/userroles" class="nav-card">
+            <div class="nav-card-icon">
+                <i class="bi bi-person-badge-fill"></i>
+            </div>
+            <h5>Manage User Roles</h5>
+            <p>Assign and remove roles from users</p>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="/admin/roles/permissionsexample" class="nav-card">
+            <div class="nav-card-icon">
+                <i class="bi bi-code-square"></i>
+            </div>
+            <h5>Developer Guide</h5>
+            <p>Learn how to implement permission-based authorization</p>
+        </a>
+    </div>
+</div>
+
+<style>
+    .page-title {
+        color: var(--navy);
+        font-weight: 700;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #1a2b6d 0%, #0b1437 100%);
+        color: white;
+        padding: 1.25rem;
+    }
+
+    .architecture-diagram {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .arch-level {
+        margin: 1rem 0;
+    }
+
+    .arch-box {
+        display: inline-block;
+        padding: 1.5rem 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        min-width: 250px;
+    }
+
+    .arch-box i {
+        display: block;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .arch-box strong {
+        display: block;
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .arch-box small {
+        display: block;
+        color: #6c757d;
+    }
+
+    .user-box {
+        background: linear-gradient(135deg, #e8f4ff 0%, #d4e9ff 100%);
+        color: #3b82f6;
+    }
+
+    .role-box {
+        background: linear-gradient(135deg, #fef4d3 0%, #fde68a 100%);
+        color: #c4860e;
+    }
+
+    .permission-box {
+        background: linear-gradient(135deg, #e6faf4 0%, #d1f4e0 100%);
+        color: #059669;
+    }
+
+    .position-box {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        color: #6b7280;
+        border: 2px dashed #9ca3af;
+    }
+
+    .arch-arrow {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--navy);
+        margin: 0.5rem 0;
+    }
+
+    .arch-divider {
+        border-top: 2px dashed #cbd5e1;
+        position: relative;
+    }
+
+    .arch-divider::after {
+        content: "Separated";
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 0 1rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-icon i {
+        font-size: 1.75rem;
+    }
+
+    .stat-content h3 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--navy);
+    }
+
+    .stat-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .nav-card {
+        display: block;
+        background: white;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--gold);
+    }
+
+    .nav-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .nav-card-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #1a2b6d 0%, #0b1437 100%);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .nav-card-icon i {
+        font-size: 1.75rem;
+        color: var(--gold);
+    }
+
+    .nav-card h5 {
+        color: var(--navy);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-card p {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+</style>

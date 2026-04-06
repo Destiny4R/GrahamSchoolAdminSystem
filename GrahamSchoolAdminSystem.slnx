@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="GrahamSchoolAdminSystemAccess/GrahamSchoolAdminSystemAccess.csproj" Id="44ec40a0-bd67-4f0c-a724-f020f6d8cd1f" />
+  <Project Path="GrahamSchoolAdminSystemModels/GrahamSchoolAdminSystemModels.csproj" Id="cd953311-f1b6-43ca-ba30-e6dd213657cd" />
+  <Project Path="GrahamSchoolAdminSystemWeb/GrahamSchoolAdminSystemWeb.csproj" />
+</Solution>

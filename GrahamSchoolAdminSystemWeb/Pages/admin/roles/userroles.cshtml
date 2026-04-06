@@ -1,0 +1,243 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.roles.UserRolesModel
+@{
+    ViewData["Title"] = "User Roles Management";
+}
+
+<!-- Success/Error Messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="page-title mb-1">
+                <i class="bi bi-person-badge-fill me-2"></i>User Roles Management
+            </h2>
+            <p class="text-muted mb-0">Assign and manage user roles for system access control</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignRoleModal">
+            <i class="bi bi-plus-circle-fill me-2"></i>Assign Role
+        </button>
+    </div>
+</div>
+
+<!-- Users and Roles Table -->
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-people-fill me-2"></i>Users and Their Roles
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (Model.Users.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="userRolesTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Assigned Roles</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-3">
+                                            @user.UserName?.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <strong>@user.UserName</strong>
+                                    </div>
+                                </td>
+                                <td>@user.Email</td>
+                                <td>
+                                    @if (Model.UserRolesMap.ContainsKey(user.Id) && Model.UserRolesMap[user.Id].Any())
+                                    {
+                                        @foreach (var role in Model.UserRolesMap[user.Id])
+                                        {
+                                            <span class="badge bg-primary me-1 mb-1">
+                                                @role
+                                                <button type="button" class="btn-close btn-close-white btn-sm ms-1" 
+                                                        onclick="removeRole('@user.Id', '@role', '@user.UserName')" 
+                                                        style="font-size: 0.6rem; padding: 0.15rem;">
+                                                </button>
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic">No roles assigned</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="openAssignModal('@user.Id', '@user.UserName')">
+                                        <i class="bi bi-plus-circle me-1"></i>Add Role
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state text-center py-5">
+                <i class="bi bi-people" style="font-size: 4rem; color: var(--navy-light);"></i>
+                <h5 class="mt-3">No Users Found</h5>
+                <p class="text-muted">There are no users in the system yet.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Assign Role Modal -->
+<div class="modal fade" id="assignRoleModal" tabindex="-1" aria-labelledby="assignRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="AssignRole">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignRoleModalLabel">
+                        <i class="bi bi-person-plus-fill me-2"></i>Assign Role to User
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="UserId" class="form-label">Select User <span class="text-danger">*</span></label>
+                        <select class="form-select" id="UserId" name="RoleAssignment.UserId" required>
+                            <option value="">-- Select User --</option>
+                            @foreach (var user in Model.Users)
+                            {
+                                <option value="@user.Id">@user.UserName (@user.Email)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="RoleId" class="form-label">Select Role <span class="text-danger">*</span></label>
+                        <select class="form-select" id="RoleId" name="RoleAssignment.RoleId" required>
+                            <option value="">-- Select Role --</option>
+                            @foreach (var role in Model.RoleOptions)
+                            {
+                                <option value="@role.Value">@role.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Note:</strong> Users can have multiple roles. Each role grants specific permissions to different system features.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Assign Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_DataTablesScriptsFiles" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('#userRolesTable').DataTable({
+                responsive: true,
+                pageLength: 25,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search users..."
+                },
+                order: [[0, 'asc']]
+            });
+        });
+
+        function openAssignModal(userId, userName) {
+            $('#UserId').val(userId);
+            $('#assignRoleModal').modal('show');
+        }
+
+        function removeRole(userId, roleName, userName) {
+            Swal.fire({
+                title: 'Remove Role?',
+                text: `Remove ${roleName} role from ${userName}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0b1437',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, remove it',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '?handler=RemoveRole',
+                        type: 'POST',
+                        data: {
+                            userId: userId,
+                            roleName: roleName,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: response.message,
+                                    confirmButtonColor: '#0b1437'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: response.message,
+                                    confirmButtonColor: '#0b1437'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to remove role',
+                                confirmButtonColor: '#0b1437'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

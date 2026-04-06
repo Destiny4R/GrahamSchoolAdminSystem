@@ -1,0 +1,359 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Graham School Admin System</title>
+
+    <link href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet" />
+    @await RenderSectionAsync("Sheets", required: false)
+    <link href="~/lib/twitter-bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/GrahamSchoolAdminSystemWeb.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <nav id="sidebar">
+        <div class="brand d-flex align-items-center">
+            <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
+            <div>
+                <div class="app-name">GIS-Gboko</div>
+                <div class="app-sub">School Management</div>
+            </div>
+        </div>
+
+        <div class="nav-section-label">Overview</div>
+        <a href="#" class="nav-link active"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+        @* <a href="#" class="nav-link"><i class="bi bi-calendar3"></i> Schedule</a>
+        <a href="#" class="nav-link"><i class="bi bi-bell-fill"></i> Announcements <span class="badge-pill">3</span></a> *@
+
+        <div class="nav-section-label">Academic</div>
+        <a asp-page="/admin/admission/index" class="nav-link"><i class="bi bi-people-fill"></i> Admission</a>
+        <div class="nav-dropdown">
+            <a href="#" class="nav-link " data-bs-toggle="collapse" data-bs-target="#securityMenu" aria-expanded="false">
+                <i class="bi bi-people"></i> Term Registration
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse" id="securityMenu">
+                <ul class="dropdown-menu-list">
+                    <li><a asp-page="/admin/termly-registeration/index" class="dropdown-item"><i class="bi bi-list-check"></i> List</a></li>
+                    <li><a asp-page="/admin/termly-registeration/upsert" class="dropdown-item"><i class="bi bi-person-badge-fill"></i> Single Reg.</a></li>
+                    <li><a asp-page="/admin/termly-registeration/batch-registration" class="dropdown-item"><i class="bi bi-people-fill"></i> Batch Reg.</a></li>
+                </ul>
+            </div>
+        </div>
+        <a asp-page="/admin/schoolclass/index" class="nav-link"><i class="bi bi-building-fill"></i> School Classes</a>
+        <a asp-page="/admin/sub-class/index" class="nav-link"><i class="bi bi-layers-fill"></i> School Sub-Classes</a>
+        <a asp-page="/admin/academicsession/index" class="nav-link"><i class="bi bi-calendar3-event-fill"></i> Academic Sessions</a>
+        @* <a href="#" class="nav-link"><i class="bi bi-book-fill"></i> Subjects</a>
+        <a href="#" class="nav-link"><i class="bi bi-clipboard2-data-fill"></i> Exams & Results</a>
+        <a href="#" class="nav-link"><i class="bi bi-journal-check"></i> Attendance <span class="badge-pill">7</span></a> *@
+
+        <div class="nav-section-label">Administration</div>
+
+        <!-- Fees & Payments Dropdown Menu -->
+        <div class="nav-dropdown">
+            <a href="#" class="nav-link " data-bs-toggle="collapse" data-bs-target="#feesMenu" aria-expanded="false">
+                <i class="bi bi-cash-coin"></i> Fees & Payments
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse" id="feesMenu">
+                <ul class="dropdown-menu-list">
+                    <li><a href="/admin/feesmanager/fees-setup" class="dropdown-item"><i class="bi bi-gear-fill"></i> Fees Setup</a></li>
+                    <li><a asp-page="/admin/feesmanager/fees-payment/index" class="dropdown-item"><i class="bi bi-floppy2-fill"></i> Fees Payment</a></li>
+                    <li><a asp-page="/admin/feesmanager/fees-payment-report" class="dropdown-item"><i class="bi bi-file-earmark-pdf-fill"></i> Fees Reports</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PTA Fees & Payments Dropdown Menu -->
+        <div class="nav-dropdown">
+            <a href="#" class="nav-link " data-bs-toggle="collapse" data-bs-target="#ptaMenu" aria-expanded="false">
+                <i class="bi bi-cash-coin"></i> PTA Management
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse" id="ptaMenu">
+                <ul class="dropdown-menu-list">
+                    <li><a asp-page="/admin/ptamanager/pta-fees-setup/index" class="dropdown-item"><i class="bi bi-gear-fill"></i> PTA Fees Setup</a></li>
+                    <li><a asp-page="/admin/ptamanager/pta-payment/index" class="dropdown-item"><i class="bi bi-floppy2-fill"></i> PTA Payment</a></li>
+                    <li><a asp-page="/admin/ptamanager/pta-fees-report" class="dropdown-item"><i class="bi bi-file-earmark-pdf-fill"></i> PTA Reports</a></li>
+                </ul>
+            </div>
+        </div>
+        <!-- PTA Fees & Payments Dropdown Menu -->
+        <div class="nav-dropdown">
+            <a href="#" class="nav-link " data-bs-toggle="collapse" data-bs-target="#otherMenu" aria-expanded="false">
+                <i class="bi bi-cash-coin"></i> Other Payments
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse" id="otherMenu">
+                <ul class="dropdown-menu-list">
+                    <li><a asp-page="/admin/other-payments/payment-items/index" class="dropdown-item"><i class="bi bi-gear-fill"></i> Create Payment List</a></li>
+                    <li><a asp-page="/admin/other-payments/other-payment-setup/index" class="dropdown-item"><i class="bi bi-gear-fill"></i> Other Payment Fees Setup</a></li>
+                    <li><a asp-page="/admin/other-payments/fees-payment/add-payment" class="dropdown-item"><i class="bi bi-floppy2-fill"></i> Add Payment</a></li>
+                    <li><a asp-page="/admin/other-payments/fees-payment/index" class="dropdown-item"><i class="bi bi-floppy2-fill"></i> Other Payment</a></li>
+                    <li><a asp-page="/admin/other-payments/other-payments-report" class="dropdown-item"><i class="bi bi-file-earmark-pdf-fill"></i> Other Reports</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- HR & Staff Dropdown Menu -->
+        <div class="nav-dropdown">
+            <a href="#" class="nav-link " data-bs-toggle="collapse" data-bs-target="#hrMenu" aria-expanded="false">
+                <i class="bi bi-person-badge"></i> HR & Staff
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse" id="hrMenu">
+                <ul class="dropdown-menu-list">
+                    <li><a href="/admin/employees/index" class="dropdown-item"><i class="bi bi-people"></i> Employees</a></li>
+                    <li><a href="/admin/positions/index" class="dropdown-item"><i class="bi bi-briefcase-fill"></i> Positions</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Security & Roles Dropdown Menu -->
+        <div class="nav-dropdown">
+            <a href="#" class="nav-link " data-bs-toggle="collapse" data-bs-target="#securityMenu" aria-expanded="false">
+                <i class="bi bi-shield-lock-fill"></i> Security & Roles
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse" id="securityMenu">
+                <ul class="dropdown-menu-list">
+                    <li><a href="/admin/roles/index" class="dropdown-item"><i class="bi bi-shield-check"></i> Roles & Permissions</a></li>
+                    <li><a href="/admin/roles/userroles" class="dropdown-item"><i class="bi bi-person-badge-fill"></i> User Roles</a></li>
+                </ul>
+            </div>
+        </div>
+
+        @* <a href="#" class="nav-link"><i class="bi bi-building-fill"></i> Classes & Rooms</a>
+        <a href="#" class="nav-link"><i class="bi bi-bus-front-fill"></i> Transport</a> *@
+        <a href="#" class="nav-link"><i class="bi bi-file-earmark-bar-graph-fill"></i> Reports</a>
+
+        <div class="nav-section-label">System</div>
+        <a href="#" class="nav-link"><i class="bi bi-gear-fill"></i> Settings</a>
+        <a href="#" class="nav-link"><i class="bi bi-question-circle-fill"></i> Help & Support</a>
+
+        <div class="sidebar-footer d-flex align-items-center gap-2">
+            <div class="avatar">AD</div>
+            <div>
+                <div class="user-name">Admin User</div>
+                <div class="user-role">Super Admin</div>
+            </div>
+            <a asp-page="/account/logout" title="Sign Out" style="margin-left:auto;">
+                <i class="bi bi-box-arrow-right ms-auto" style="color:rgba(255,255,255,.4);cursor:pointer;font-size:1rem;"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- OVERLAY -->
+    <div id="overlay"></div>
+
+    <!-- TOPBAR -->
+    <header id="topbar">
+        <button class="menu-btn" id="menuBtn"><i class="bi bi-list"></i></button>
+        <div class="page-title">Dashboard</div>
+        <div class="search-wrap">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" placeholder="Search students, classes…" />
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <div class="icon-btn" id="darkToggle" title="Toggle dark mode">
+            <i class="bi bi-moon"></i>
+        </div>
+
+        <!-- NOTIFICATION BELL -->
+        <div class="notif-wrap" id="notifWrap">
+            <div class="icon-btn" id="notifBtn" title="Notifications">
+                <i class="bi bi-bell-fill"></i>
+                <span class="notif-dot"></span>
+            </div>
+            <!-- Notification Panel -->
+            <div class="notif-panel" id="notifPanel">
+                <div class="drop-header">
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="drop-title">Notifications</span>
+                        <span class="unread-count">5</span>
+                    </div>
+                    <span class="drop-mark">Mark all read</span>
+                </div>
+
+                <!-- Notification Items -->
+                <div class="notif-item unread">
+                    <div class="notif-icon" style="background:#fff0f2;color:var(--rose);"><i class="bi bi-exclamation-circle-fill"></i></div>
+                    <div>
+                        <div class="notif-text">7 students marked absent today in <strong>JSS 2B</strong></div>
+                        <div class="notif-time"><i class="bi bi-clock"></i> 2 minutes ago</div>
+                    </div>
+                </div>
+                <div class="notif-item unread">
+                    <div class="notif-icon" style="background:#e8f4ff;color:#3b82f6;"><i class="bi bi-cash-coin"></i></div>
+                    <div>
+                        <div class="notif-text">Fee payment of <strong>₦45,000</strong> received from Adaeze Okonkwo</div>
+                        <div class="notif-time"><i class="bi bi-clock"></i> 18 minutes ago</div>
+                    </div>
+                </div>
+                <div class="notif-item unread">
+                    <div class="notif-icon" style="background:#fef4d3;color:#c4860e;"><i class="bi bi-journal-check"></i></div>
+                    <div>
+                        <div class="notif-text">Mid-Term exam timetable uploaded by <strong>Mr. Salisu</strong></div>
+                        <div class="notif-time"><i class="bi bi-clock"></i> 1 hour ago</div>
+                    </div>
+                </div>
+                <div class="notif-item unread">
+                    <div class="notif-icon" style="background:#e6faf4;color:var(--mint);"><i class="bi bi-person-plus-fill"></i></div>
+                    <div>
+                        <div class="notif-text">New student <strong>Emeka Okoro</strong> registered in SS 1A</div>
+                        <div class="notif-time"><i class="bi bi-clock"></i> 3 hours ago</div>
+                    </div>
+                </div>
+                <div class="notif-item unread">
+                    <div class="notif-icon" style="background:#f0e8ff;color:#a855f7;"><i class="bi bi-award-fill"></i></div>
+                    <div>
+                        <div class="notif-text">Results published for <strong>JSS 3 Mathematics</strong> — 28 scored above 70%</div>
+                        <div class="notif-time"><i class="bi bi-clock"></i> Yesterday, 4:12 PM</div>
+                    </div>
+                </div>
+                <div class="notif-item">
+                    <div class="notif-icon" style="background:#eceef5;color:#7b82a8;"><i class="bi bi-gear-fill"></i></div>
+                    <div>
+                        <div class="notif-text">System backup completed successfully at 2:00 AM</div>
+                        <div class="notif-time"><i class="bi bi-clock"></i> Yesterday, 2:00 AM</div>
+                    </div>
+                </div>
+
+                <div class="notif-footer"><a href="#">View all notifications →</a></div>
+            </div>
+        </div>
+
+        <!-- MESSAGES -->
+        <div class="notif-wrap" id="msgWrap">
+            <div class="icon-btn" id="msgBtn" title="Messages">
+                <i class="bi bi-envelope-fill"></i>
+                <span class="notif-dot" style="background:#a855f7;"></span>
+            </div>
+            <!-- Messages Panel -->
+            <div class="notif-panel" id="msgPanel" style="width:340px;">
+                <div class="drop-header">
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="drop-title">Messages</span>
+                        <span class="unread-count" style="background:#a855f7;">3</span>
+                    </div>
+                    <span class="drop-mark">Mark all read</span>
+                </div>
+
+                <!-- Message Items -->
+                <div class="msg-item unread">
+                    <div class="msg-ava" style="background:#e8f4ff;color:#3b82f6;">MR</div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="d-flex align-items-center">
+                            <span class="msg-sender">Mr. Rasheed (HOD Math)</span>
+                            <span class="msg-time">9:42 AM</span>
+                        </div>
+                        <div class="msg-preview">Please approve the new exam schedule I submitted yesterday.</div>
+                    </div>
+                    <div class="msg-unread-dot"></div>
+                </div>
+                <div class="msg-item unread">
+                    <div class="msg-ava" style="background:#fef4d3;color:#c4860e;">FO</div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="d-flex align-items-center">
+                            <span class="msg-sender">Finance Officer</span>
+                            <span class="msg-time">8:15 AM</span>
+                        </div>
+                        <div class="msg-preview">Monthly fee report is ready for your review and signature.</div>
+                    </div>
+                    <div class="msg-unread-dot"></div>
+                </div>
+                <div class="msg-item unread">
+                    <div class="msg-ava" style="background:#fff0f2;color:var(--rose);">PT</div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="d-flex align-items-center">
+                            <span class="msg-sender">Parent: Tunde's Dad</span>
+                            <span class="msg-time">Yesterday</span>
+                        </div>
+                        <div class="msg-preview">I would like to discuss my son's attendance record this term.</div>
+                    </div>
+                    <div class="msg-unread-dot"></div>
+                </div>
+                <div class="msg-item">
+                    <div class="msg-ava" style="background:#e6faf4;color:var(--mint);">VP</div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="d-flex align-items-center">
+                            <span class="msg-sender">Vice Principal</span>
+                            <span class="msg-time">Mar 25</span>
+                        </div>
+                        <div class="msg-preview">Staff meeting rescheduled to Friday 8:00 AM. Please notify all HODs.</div>
+                    </div>
+                </div>
+                <div class="msg-item">
+                    <div class="msg-ava" style="background:#f0e8ff;color:#a855f7;">IT</div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="d-flex align-items-center">
+                            <span class="msg-sender">IT Support</span>
+                            <span class="msg-time">Mar 24</span>
+                        </div>
+                        <div class="msg-preview">Portal maintenance completed. All modules are now online.</div>
+                    </div>
+                </div>
+
+                <div class="notif-footer"><a href="#">Open full inbox →</a></div>
+            </div>
+        </div>
+
+        <!-- PROFILE AVATAR + DROPDOWN -->
+        <div class="profile-wrap" id="profileWrap">
+            <div class="top-avatar" id="profileBtn" title="My Account">AD</div>
+            <!-- Profile Dropdown -->
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="pd-header">
+                    <div class="pd-avatar">AD</div>
+                    <div>
+                        <div class="pd-name">Admin User</div>
+                        <div class="pd-email">admin@eduprime.ng</div>
+                        <div class="pd-role-badge">Super Admin</div>
+                    </div>
+                </div>
+                <div class="pd-menu">
+                    <a href="#" class="pd-item"><i class="bi bi-person-circle"></i> My Profile</a>
+                    <a href="#" class="pd-item"><i class="bi bi-shield-lock-fill"></i> Account Security</a>
+                    <a href="#" class="pd-item"><i class="bi bi-bell-fill"></i> Notification Preferences</a>
+                    <hr class="pd-divider" />
+                    <a href="#" class="pd-item"><i class="bi bi-building-fill"></i> School Settings</a>
+                    <a href="#" class="pd-item"><i class="bi bi-people-fill"></i> Manage Roles & Users</a>
+                    <a href="#" class="pd-item"><i class="bi bi-file-earmark-bar-graph-fill"></i> Activity Log</a>
+                    <hr class="pd-divider" />
+                    <a href="#" class="pd-item"><i class="bi bi-question-circle-fill"></i> Help & Support</a>
+                    <a href="#" class="pd-item"><i class="bi bi-patch-check-fill"></i> v2.4.1 — Check for Updates</a>
+                    <hr class="pd-divider" />
+                    <a asp-page="/account/logout" class="pd-item danger"><i class="bi bi-box-arrow-right"></i> Sign Out</a>
+                </div>
+            </div>
+        </div>
+
+    </header>
+    <main id="main">
+        @RenderBody()
+        <footer id="site-footer">
+            <div class="d-flex flex-column flex-sm-row align-items-center justify-content-center gap-2 gap-sm-4">
+                <span>© 2026 <span>Graham International School</span>. All rights reserved.</span>
+                <span class="d-none d-sm-inline" style="opacity:.3;">|</span>
+                <span>Designed &amp; Developed by <span>D-Best Return Tech</span></span>
+                <span class="d-none d-sm-inline" style="opacity:.3;">|</span>
+                <span>
+                    <a href="#">Privacy Policy</a> &nbsp;·&nbsp;
+                    <a href="#">Terms of Use</a> &nbsp;·&nbsp;
+                    <a href="#">Support</a>
+                </span>
+            </div>
+        </footer>
+
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/twitter-bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

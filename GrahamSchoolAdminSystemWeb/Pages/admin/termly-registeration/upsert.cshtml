@@ -1,0 +1,111 @@
+﻿@page
+@inject ITermRegistrationServices termServices
+@model GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration.upsertModel
+@{
+    ViewData["Title"] = Model.termReg.Id > 0 ? "Edit Termly Registration" : "New Termly Registration";
+}
+@section Sheets {
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DatatablesSheetFiles" />
+}
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-list-check"></i> Termly Registration
+        </h1>
+        <p class="text-white-50">@ViewData["Title"]</p>
+    </div>
+    <div class="header-actions">
+        <div class="btn-group">
+            <a asp-page="index" class="btn btn-primary"><i class="bi bi-arrow-left me-2"></i> Back</a>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>Success!</strong> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle-fill me-2"></i>
+        <strong>Error!</strong> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="page-content">
+    <div class="row">
+        <div class="col-md-6 offset-md-6">
+            <form method="post" asp-page-handler="Search">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" name="termregnumber" required placeholder="Student Registration Number">
+                    <button type="submit" class="btn btn-success"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @if(Model.termReg.StudentId > 0)
+    {
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <div class="h3 text-white"> Student Term Registration Form</div>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Register">
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Full Name</label>
+                            <input type="text" asp-for="termReg.StudentRegNumber" class="form-control" readonly placeholder="Full Name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Student Registration Number</label>
+                            <input type="text" asp-for="termReg.StudentName" class="form-control" placeholder="GIS/BN/001" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Term</label>
+                            <select class="form-select" asp-for="termReg.Term" asp-items="@Model.Selections.Terms">
+                                <option disabled selected>---Select Term---</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Academic Session</label>
+                            <select class="form-select" asp-for="termReg.SessionId" asp-items="@Model.Selections.AcademicSession">
+                                <option disabled selected>---Select Session---</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Class</label>
+                            <select class="form-select" asp-for="termReg.SchoolClassId" asp-items="@Model.Selections.SchoolClasses">
+                                <option disabled selected>---Select Class---</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="exampleFormControlInput1" class="form-label">Sub Class</label>
+                            <select class="form-select" asp-for="termReg.SchoolSubclassId" asp-items="@Model.Selections.SubClass">
+                                <option disabled selected>---Select Sub Class---</option>
+                            </select>
+                        </div>
+                        <input type="hidden" asp-for="termReg.Id" />
+                        <input type="hidden" asp-for="termReg.StudentId" />
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary ">@(Model.termReg.Id > 0 ? "Update" : "Register")</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

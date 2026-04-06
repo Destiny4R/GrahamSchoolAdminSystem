@@ -1,0 +1,420 @@
+﻿@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration.indexModel
+@{
+    ViewData["Title"] = "Termly Registration";
+}
+@section Sheets {
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+    <partial name="_DatatablesSheetFiles" />
+}
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-list-check"></i> Termly Registration
+        </h1>
+        <p class="text-white-50">Manage students term registrations</p>
+    </div>
+    <div class="header-actions">
+        <div class="btn-group">
+            <a asp-page="batch-registration" class="btn btn-primary">Batch Registration</a>
+            <a asp-page="upsert" class="btn btn-primary">Single Registration</a>
+            <button id="bulkDeleteBtn" class="btn btn-danger" style="display:none;">
+                <i class="bi bi-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+    </div>
+</div>
+<div class="page-content">
+    <!-- Success Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Error Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label for="term" class="form-label">Term</label>
+            <select class="form-select" id="term" asp-items="@Model.Selections.Terms">
+                <option value="">---Select Term---</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="session" class="form-label">Academic Session</label>
+            <select class="form-select" id="session" asp-items="@Model.Selections.AcademicSession">
+                <option value="">---Select Session---</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="schoolclass" class="form-label">Class</label>
+            <select class="form-select" id="schoolclass" asp-items="@Model.Selections.SchoolClasses">
+                <option value="">---Select Class---</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="subclass" class="form-label">Sub Class</label>
+            <select class="form-select" id="subclass" asp-items="@Model.Selections.SubClass">
+                <option value="">---Select Sub Class---</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- DataTable Container -->
+    <div class="datatable-container">
+        <table id="studentsTermRegTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">
+                        <input type="checkbox" id="selectAll" class="form-check-input" title="Select All" />
+                    </th>
+                    <th>#</th>
+                    <th>Full Name</th>
+                    <th>Reg. Number</th>
+                    <th>Term</th>
+                    <th>Session</th>
+                    <th>Class</th>
+                    <th>Created Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_DatatablesScriptsFiles" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/lib/jquery.blockui/jquery.blockui.min.js"></script>
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function(){
+            let tabledata = null;
+
+            // Initialize DataTable
+            if ($("#studentsTermRegTable").length) {
+                tabledata = $('#studentsTermRegTable').DataTable({
+                    serverSide: true,
+                    processing: true,
+                    searching: true,
+                    paging: true,
+                    info: true,
+                    responsive: true,
+                    ajax: {
+                        url: "/home/GetTermRegistrationsDataTable",
+                        type: "POST",
+                        dataType: 'json',
+                        data: function (d) {
+                            // Get filter values
+                            const term = $('#term').val();
+                            const session = $('#session').val();
+                            const schoolclass = $('#schoolclass').val();
+                            const subclass = $('#subclass').val();
+
+                            // Prepare DataTable form data with filters
+                            const formData = new FormData();
+                            formData.append('draw', d.draw);
+                            formData.append('start', d.start || 0);
+                            formData.append('length', d.length || 10);
+                            formData.append('search[value]', d.search?.value || '');
+                            if (d.order && d.order.length > 0) {
+                                formData.append('order[0][column]', d.order[0].column);
+                                formData.append('order[0][dir]', d.order[0].dir);
+                            }
+                            formData.append('term', term);
+                            formData.append('session', session);
+                            formData.append('schoolclass', schoolclass);
+                            formData.append('subclass', subclass);
+
+                            return formData;
+                        },
+                        processData: false,
+                        contentType: false
+                    },
+                    columns: [
+                        {
+                            data: null,
+                            orderable: false,
+                            searchable: false,
+                            autoWidth: true,
+                            width: '50px',
+                            render: function (data, type, row) {
+                                return `<input type="checkbox" class="form-check-input row-checkbox" value="${row.id}" />`;
+                            }
+                        },
+                        {
+                            data: null,
+                            orderable: false,
+                            searchable: false,
+                            autoWidth: true,
+                            render: function (data, type, row, meta) {
+                                return meta.settings._iDisplayStart + meta.row + 1;
+                            }
+                        },
+                        { data: "name", autoWidth: true },
+                        { data: "regnumber", autoWidth: true },
+                        { data: "term", autoWidth: true },
+                        { data: "session", autoWidth: true },
+                        { data: "schoolclass", autoWidth: true },
+                        {
+                            data: "createdate",
+                            autoWidth: true,
+                            render: function (data, type, row) {
+                                if (data != null) {
+                                    let date = new Date(data);
+                                    return date.toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                                }
+                                return "N/A";
+                            }
+                        },
+                        {
+                            data: null,
+                            orderable: false,
+                            searchable: false,
+                            render: function (data, type, row) {
+                                return `
+                                    <div class="dropdown">
+                                        <button class="btn btn-dark btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical me-1"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="/admin/termly-registeration/upsert?id=${row.id}"><i class="bi bi-pencil-square"></i> Edit</a></li>
+                                            <li><button class="dropdown-item btn-delete-single" data-id="${row.id}"><i class="bi bi-trash"></i> Delete</button></li>
+                                        </ul>
+                                    </div>
+                                `;
+                            }
+                        }
+                    ]
+                });
+            }
+
+            // Select All Checkbox
+            $(document).on('click', '#selectAll', function () {
+                const isChecked = $(this).is(':checked');
+                $('.row-checkbox').prop('checked', isChecked);
+                updateBulkDeleteButton();
+            });
+
+            // Individual Row Checkbox
+            $(document).on('click', '.row-checkbox', function () {
+                const totalCheckboxes = $('.row-checkbox').length;
+                const checkedCheckboxes = $('.row-checkbox:checked').length;
+
+                if (totalCheckboxes === checkedCheckboxes) {
+                    $('#selectAll').prop('checked', true);
+                } else {
+                    $('#selectAll').prop('checked', false);
+                }
+                updateBulkDeleteButton();
+            });
+
+            // Update Bulk Delete Button Visibility
+            function updateBulkDeleteButton() {
+                const selectedCount = $('.row-checkbox:checked').length;
+                $('#selectedCount').text(selectedCount);
+
+                if (selectedCount > 0) {
+                    $('#bulkDeleteBtn').show();
+                } else {
+                    $('#bulkDeleteBtn').hide();
+                }
+            }
+
+            // Bulk Delete
+            $(document).on('click', '#bulkDeleteBtn', function () {
+                const selectedIds = [];
+                $('.row-checkbox:checked').each(function () {
+                    selectedIds.push(parseInt($(this).val()));
+                });
+
+                if (selectedIds.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Warning',
+                        text: 'Please select at least one record to delete'
+                    });
+                    return;
+                }
+
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: "btn btn-danger rounded-pill btn-sm",
+                        cancelButton: "btn btn-secondary rounded-pill btn-sm me-2"
+                    },
+                    buttonsStyling: false
+                });
+
+                swalWithBootstrapButtons.fire({
+                    title: "Delete Confirmation",
+                    html: `Are you sure you want to delete <strong>${selectedIds.length}</strong> selected registration(s)? This action cannot be undone.`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, Delete",
+                    cancelButtonText: "No, Cancel",
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "POST",
+                            url: '/api/v1/termregistration/deletemultiple',
+                            contentType: 'application/json',
+                            data: JSON.stringify(selectedIds),
+                            beforeSend: function () {
+                                $.blockUI({
+                                    message: '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div>',
+                                    css: {
+                                        backgroundColor: 'transparent',
+                                        border: 'none'
+                                    },
+                                    overlayCSS: {
+                                        backgroundColor: '#000',
+                                        opacity: 0.6
+                                    }
+                                });
+                            },
+                            success: function (response) {
+                                $.unblockUI();
+                                if (response.success) {
+                                    swalWithBootstrapButtons.fire({
+                                        title: 'Success!',
+                                        text: response.message,
+                                        icon: 'success'
+                                    });
+                                    tabledata.ajax.reload(null, false);
+                                    $('#selectAll').prop('checked', false);
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: response.message
+                                    });
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                $.unblockUI();
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'An error occurred while deleting records. Please try again.'
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Single Delete
+            $(document).on('click', '.btn-delete-single', function () {
+                const id = $(this).data('id');
+
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: "btn btn-danger rounded-pill btn-sm",
+                        cancelButton: "btn btn-secondary rounded-pill btn-sm me-2"
+                    },
+                    buttonsStyling: false
+                });
+
+                swalWithBootstrapButtons.fire({
+                    title: "Delete Confirmation",
+                    text: 'Are you sure you want to remove this record?',
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, Delete",
+                    cancelButtonText: "No, Cancel",
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "DELETE",
+                            url: `/api/v1/termregistration/${id}`,
+                            contentType: 'application/json',
+                            beforeSend: function () {
+                                $.blockUI({
+                                    message: '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div>',
+                                    css: {
+                                        backgroundColor: 'transparent',
+                                        border: 'none'
+                                    },
+                                    overlayCSS: {
+                                        backgroundColor: '#000',
+                                        opacity: 0.6
+                                    }
+                                });
+                            },
+                            success: function (response) {
+                                $.unblockUI();
+                                if (response.success) {
+                                    swalWithBootstrapButtons.fire({
+                                        title: 'Success!',
+                                        text: response.message,
+                                        icon: 'success'
+                                    });
+                                    tabledata.ajax.reload(null, false);
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: response.message
+                                    });
+                                }
+                            },
+                            error: function () {
+                                $.unblockUI();
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'An error occurred while deleting the record.'
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Filter Logic - Only apply when all filters are selected
+            $('#term, #session, #schoolclass, #subclass').on('change', function () {
+                const term = $('#term').val();
+                const session = $('#session').val();
+                const schoolclass = $('#schoolclass').val();
+                const subclass = $('#subclass').val();
+
+                // Only reload table if all filters are selected
+                if (term && session && schoolclass && subclass) {
+                    // Reset pagination to first page when filtering
+                    tabledata.page(0).draw('page');
+                } else {
+                    // If filters are cleared, also show all records
+                    if (!term && !session && !schoolclass && !subclass) {
+                        tabledata.page(0).draw('page');
+                    }
+                }
+            });
+
+            // Clear filters function
+            function clearFilters() {
+                $('#term').val('');
+                $('#session').val('');
+                $('#schoolclass').val('');
+                $('#subclass').val('');
+                tabledata.ajax.reload();
+            }
+        });
+    </script>
+}

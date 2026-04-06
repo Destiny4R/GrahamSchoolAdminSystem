@@ -1,0 +1,153 @@
+﻿@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.admission.indexModel
+@using static GrahamSchoolAdminSystemModels.Models.GetEnums;
+@{
+    ViewData["Title"] = "Student Admission - Graham School Admin System";
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link href="~/lib/sweetalert2/sweetalert2.css" rel="stylesheet" />
+    <partial name="_DatatablesSheetFiles" />
+}
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-person-plus-fill"></i> Student Admission
+        </h1>
+        <p class="text-white-50">Manage student registrations and account statuses</p>
+    </div>
+    <div class="header-actions">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#studentModal" onclick="resetStudentForm()">
+            <i class="bi bi-plus-circle me-2"></i>Add Student
+        </button>
+    </div>
+</div>
+
+<div class="page-content">
+    <!-- Success Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Error Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- DataTable Container -->
+    <div class="datatable-container">
+        <table id="studentsTable" class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th class="col-1">#</th>
+                    <th class="col-3">Full Name</th>
+                    <th class="col-2">Email</th>
+                    <th class="col-2">Gender</th>
+                    <th class="col-2">Status</th>
+                    <th class="col-2">Created Date</th>
+                    <th class="col-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus-fill me-2"></i><span id="studentModalTitle">Add Student</span>
+                    </h5>
+                    <small id="studentModalSubtitle">Create new student information</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    <input type="hidden" asp-for="StudentModel.Id" id="studentId" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="studentSurname">
+                                <i class="bi bi-person-fill me-1"></i>Surname <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" asp-for="StudentModel.Surname" id="studentSurname"
+                                   placeholder="Enter surname" required maxlength="50">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="studentFirstname">
+                                <i class="bi bi-person-fill me-1"></i>Firstname <span class="text-danger">*</span>
+                            </label>
+                                <input type="text" class="form-control" id="studentFirstname" asp-for="StudentModel.Firstname"
+                                   placeholder="Enter firstname" required maxlength="50">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="studentOthername">
+                                <i class="bi bi-person-fill me-1"></i>Othername <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="studentOthername" asp-for="StudentModel.Othername"
+                                   placeholder="Enter othername" maxlength="50">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="studentGenderId">
+                                <i class="bi bi-person-badge-fill me-1"></i>Gender <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="studentGenderId" required asp-for="StudentModel.GenderId">
+                                <option selected disabled value="">Select gender...</option>
+                                @foreach (Gender gender in Enum.GetValues(typeof(Gender)))
+                                {
+                                    <option value="@((int)gender)">@gender</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="studentEmail">
+                            <i class="bi bi-envelope-fill me-1"></i>Student Reg. Number <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" asp-for="StudentModel.Email" id="studentEmail" placeholder="Enter student registration number" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i><span id="studentSubmitBtnText">Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/lib/jquery.blockui/jquery.blockui.js"></script>
+    <partial name="_DatatablesScriptsFiles" />
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
+}
+

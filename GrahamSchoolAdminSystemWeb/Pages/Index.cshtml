@@ -1,0 +1,390 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="content-inner">
+
+    <!-- Welcome Banner + Quick Actions -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-8">
+            <div class="welcome-banner">
+                <div class="wb-title">Good Morning, Admin 👋</div>
+                <div class="wb-sub">Friday, 27 March 2026 · Term 2, Week 11</div>
+                <div class="wb-badge"><i class="bi bi-patch-check-fill"></i> All systems running normally</div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="panel h-100">
+                <div class="panel-head">
+                    <span class="panel-title">Quick Actions</span>
+                </div>
+                <div class="p-3">
+                    <div class="row g-2">
+                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-person-plus-fill"></i><span>Add Student</span></a></div>
+                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-clipboard-plus-fill"></i><span>Mark Attendance</span></a></div>
+                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-receipt-cutoff"></i><span>Record Fee</span></a></div>
+                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-megaphone-fill"></i><span>New Notice</span></a></div>
+                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-calendar-plus-fill"></i><span>Schedule Exam</span></a></div>
+                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-download"></i><span>Export Report</span></a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="stat-card blue">
+                <div class="deco-circle"></div>
+                <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-value">1,284</div>
+                <div class="stat-label">Total Students</div>
+                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> +42 this term</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card gold">
+                <div class="deco-circle"></div>
+                <div class="stat-icon"><i class="bi bi-person-badge-fill"></i></div>
+                <div class="stat-value">86</div>
+                <div class="stat-label">Teaching Staff</div>
+                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> +4 new hires</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card mint">
+                <div class="deco-circle"></div>
+                <div class="stat-icon"><i class="bi bi-building-fill"></i></div>
+                <div class="stat-value">38</div>
+                <div class="stat-label">Active Classes</div>
+                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> 2 added</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card rose">
+                <div class="deco-circle"></div>
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-value">₦4.2M</div>
+                <div class="stat-label">Fees Collected</div>
+                <div class="stat-change down"><i class="bi bi-arrow-down-short"></i> 12% pending</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Overview + Subject Performance -->
+    <div class="row g-3 mb-3">
+        <!-- Attendance Chart -->
+        <div class="col-lg-5">
+            <div class="panel h-100">
+                <div class="panel-head">
+                    <span class="panel-title">Weekly Attendance</span>
+                    <a href="#" class="panel-action">View Full →</a>
+                </div>
+                <div class="p-4">
+                    <div class="d-flex align-items-end justify-content-between mb-3">
+                        <div>
+                            <div style="font-family:'DM Mono',monospace;font-size:2.2rem;color:var(--navy);line-height:1;">92.4%</div>
+                            <div style="font-size:.78rem;color:#7b82a8;margin-top:2px;">Avg this week</div>
+                        </div>
+                        <span class="tag tag-present"><i class="bi bi-arrow-up-short"></i> +1.2% vs last week</span>
+                    </div>
+                    <div class="mini-chart mb-2">
+                        <div class="mini-bar" style="height:65%;" title="Mon"></div>
+                        <div class="mini-bar" style="height:80%;" title="Tue"></div>
+                        <div class="mini-bar" style="height:55%;" title="Wed"></div>
+                        <div class="mini-bar active" style="height:92%;" title="Thu"></div>
+                        <div class="mini-bar active" style="height:88%;" title="Fri"></div>
+                        <div class="mini-bar" style="height:30%;" title="Sat"></div>
+                        <div class="mini-bar" style="height:20%;" title="Sun"></div>
+                    </div>
+                    <div class="d-flex justify-content-between" style="font-size:.68rem;color:#9099be;letter-spacing:.5px;">
+                        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                    </div>
+                    <div class="row g-2 mt-3">
+                        <div class="col-4 text-center">
+                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:#1db87d;font-weight:500;">1,184</div>
+                            <div style="font-size:.7rem;color:#9099be;">Present</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--rose);font-weight:500;">68</div>
+                            <div style="font-size:.7rem;color:#9099be;">Absent</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:#c4860e;font-weight:500;">32</div>
+                            <div style="font-size:.7rem;color:#9099be;">Late</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Performance -->
+        <div class="col-lg-7">
+            <div class="panel h-100">
+                <div class="panel-head">
+                    <span class="panel-title">Subject Performance (Avg Score)</span>
+                    <a href="#" class="panel-action">Details →</a>
+                </div>
+                <div class="p-4">
+                    <div class="subject-bar">
+                        <div class="bar-info"><span class="bar-name">Mathematics</span><span class="bar-val">74%</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width:74%;background:#3b82f6;"></div></div>
+                    </div>
+                    <div class="subject-bar">
+                        <div class="bar-info"><span class="bar-name">English Language</span><span class="bar-val">81%</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width:81%;background:var(--mint);"></div></div>
+                    </div>
+                    <div class="subject-bar">
+                        <div class="bar-info"><span class="bar-name">Basic Science</span><span class="bar-val">68%</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width:68%;background:var(--rose);"></div></div>
+                    </div>
+                    <div class="subject-bar">
+                        <div class="bar-info"><span class="bar-name">Social Studies</span><span class="bar-val">79%</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width:79%;background:var(--gold);"></div></div>
+                    </div>
+                    <div class="subject-bar">
+                        <div class="bar-info"><span class="bar-name">ICT / Computer</span><span class="bar-val">88%</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width:88%;background:#a855f7;"></div></div>
+                    </div>
+                    <div class="subject-bar mb-0">
+                        <div class="bar-info"><span class="bar-name">Civic Education</span><span class="bar-val">72%</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--sky);"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Students Table + Upcoming Events -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-8">
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Recent Student Activity</span>
+                    <a href="#" class="panel-action">All Students →</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Class</th>
+                                <th>Subject</th>
+                                <th>Last Score</th>
+                                <th>Attendance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="student-ava" style="background:#e8f0ff;color:#3b5bdb;">AO</div>
+                                        <div>
+                                            <div style="font-weight:600;font-size:.84rem;">Adaeze Okonkwo</div>
+                                            <div style="font-size:.7rem;color:#9099be;">STU-00124</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>JSS 3B</td>
+                                <td>Mathematics</td>
+                                <td><span style="font-family:'DM Mono',monospace;">87/100</span></td>
+                                <td><span style="font-family:'DM Mono',monospace;">96%</span></td>
+                                <td><span class="tag tag-present">Present</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="student-ava" style="background:#fff0f2;color:#e84d6a;">CB</div>
+                                        <div>
+                                            <div style="font-weight:600;font-size:.84rem;">Chukwuemeka Bello</div>
+                                            <div style="font-size:.7rem;color:#9099be;">STU-00115</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>SS 2A</td>
+                                <td>Physics</td>
+                                <td><span style="font-family:'DM Mono',monospace;">62/100</span></td>
+                                <td><span style="font-family:'DM Mono',monospace;">78%</span></td>
+                                <td><span class="tag tag-late">Late</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="student-ava" style="background:#e6faf4;color:#1db87d;">FI</div>
+                                        <div>
+                                            <div style="font-weight:600;font-size:.84rem;">Fatimah Ibrahim</div>
+                                            <div style="font-size:.7rem;color:#9099be;">STU-00098</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>SS 1C</td>
+                                <td>Chemistry</td>
+                                <td><span style="font-family:'DM Mono',monospace;">91/100</span></td>
+                                <td><span style="font-family:'DM Mono',monospace;">100%</span></td>
+                                <td><span class="tag tag-present">Present</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="student-ava" style="background:#fef4d3;color:#c4860e;">TN</div>
+                                        <div>
+                                            <div style="font-weight:600;font-size:.84rem;">Tunde Nwachukwu</div>
+                                            <div style="font-size:.7rem;color:#9099be;">STU-00076</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>JSS 2A</td>
+                                <td>English</td>
+                                <td><span style="font-family:'DM Mono',monospace;">55/100</span></td>
+                                <td><span style="font-family:'DM Mono',monospace;">60%</span></td>
+                                <td><span class="tag tag-absent">Absent</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="student-ava" style="background:#f0e8ff;color:#a855f7;">KA</div>
+                                        <div>
+                                            <div style="font-weight:600;font-size:.84rem;">Kemi Adeyemi</div>
+                                            <div style="font-size:.7rem;color:#9099be;">STU-00143</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>SS 3B</td>
+                                <td>Biology</td>
+                                <td><span style="font-family:'DM Mono',monospace;">78/100</span></td>
+                                <td><span style="font-family:'DM Mono',monospace;">89%</span></td>
+                                <td><span class="tag tag-present">Present</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="col-lg-4">
+            <div class="panel h-100">
+                <div class="panel-head">
+                    <span class="panel-title">Upcoming Events</span>
+                    <a href="#" class="panel-action">Calendar →</a>
+                </div>
+                <div class="event-item">
+                    <div class="event-date-box"><div class="day">28</div><div class="month">Mar</div></div>
+                    <div class="event-divider" style="background:var(--sky);"></div>
+                    <div><div class="event-title">Mid-Term Examinations Begin</div><div class="event-meta"><i class="bi bi-clock"></i> 8:00 AM · All Classes</div></div>
+                </div>
+                <div class="event-item">
+                    <div class="event-date-box"><div class="day">01</div><div class="month">Apr</div></div>
+                    <div class="event-divider" style="background:var(--gold);"></div>
+                    <div><div class="event-title">Parent-Teacher Meeting</div><div class="event-meta"><i class="bi bi-people"></i> 10:00 AM · Hall A</div></div>
+                </div>
+                <div class="event-item">
+                    <div class="event-date-box"><div class="day">05</div><div class="month">Apr</div></div>
+                    <div class="event-divider" style="background:var(--mint);"></div>
+                    <div><div class="event-title">Inter-House Sports Day</div><div class="event-meta"><i class="bi bi-trophy"></i> 7:30 AM · Field</div></div>
+                </div>
+                <div class="event-item">
+                    <div class="event-date-box"><div class="day">12</div><div class="month">Apr</div></div>
+                    <div class="event-divider" style="background:var(--rose);"></div>
+                    <div><div class="event-title">Second Term Ends</div><div class="event-meta"><i class="bi bi-flag-fill"></i> End of Term</div></div>
+                </div>
+                <div class="event-item">
+                    <div class="event-date-box"><div class="day">20</div><div class="month">Apr</div></div>
+                    <div class="event-divider" style="background:#a855f7;"></div>
+                    <div><div class="event-title">Third Term Resumption</div><div class="event-meta"><i class="bi bi-door-open"></i> 7:45 AM · All</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notices + Fee Summary -->
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Notice Board</span>
+                    <a href="#" class="panel-action">All Notices →</a>
+                </div>
+                <div class="notice-item">
+                    <div class="notice-icon" style="background:#e8f4ff;color:#3b82f6;"><i class="bi bi-megaphone-fill"></i></div>
+                    <div>
+                        <div class="notice-title">Uniform Policy Update — Term 3</div>
+                        <div class="notice-date">Mar 26, 2026 · By Admin</div>
+                    </div>
+                </div>
+                <div class="notice-item">
+                    <div class="notice-icon" style="background:#fef4d3;color:#c4860e;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <div>
+                        <div class="notice-title">Fee Deadline: 31 March 2026</div>
+                        <div class="notice-date">Mar 24, 2026 · Finance Dept</div>
+                    </div>
+                </div>
+                <div class="notice-item">
+                    <div class="notice-icon" style="background:#e6faf4;color:#1db87d;"><i class="bi bi-award-fill"></i></div>
+                    <div>
+                        <div class="notice-title">Best Student Award Nominations Open</div>
+                        <div class="notice-date">Mar 22, 2026 · Academic Office</div>
+                    </div>
+                </div>
+                <div class="notice-item">
+                    <div class="notice-icon" style="background:#fff0f2;color:#e84d6a;"><i class="bi bi-shield-exclamation"></i></div>
+                    <div>
+                        <div class="notice-title">Security Alert: Gate Access Protocol</div>
+                        <div class="notice-date">Mar 20, 2026 · Security</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Fee Collection Summary</span>
+                    <a href="#" class="panel-action">Finance →</a>
+                </div>
+                <div class="p-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Total Expected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:var(--navy);">₦4,800,000</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Collected</span>
+                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:#1db87d;">₦4,176,000</span>
+                    </div>
+                    <div class="bar-track mb-1" style="height:10px;">
+                        <div class="bar-fill" style="width:87%;background:linear-gradient(90deg,var(--mint),#3b82f6);"></div>
+                    </div>
+                    <div style="font-size:.72rem;color:#9099be;margin-bottom:18px;">87% collected · ₦624,000 outstanding</div>
+
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div style="background:#e6faf4;border-radius:10px;padding:12px;text-align:center;">
+                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#1db87d;">842</div>
+                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Fully Paid</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:#fef4d3;border-radius:10px;padding:12px;text-align:center;">
+                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#c4860e;">289</div>
+                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Partial</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div style="background:#fff0f2;border-radius:10px;padding:12px;text-align:center;">
+                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:var(--rose);">153</div>
+                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Unpaid</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /content-inner -->
+
+

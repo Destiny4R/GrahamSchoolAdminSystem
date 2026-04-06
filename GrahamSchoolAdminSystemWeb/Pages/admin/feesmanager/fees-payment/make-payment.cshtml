@@ -1,0 +1,182 @@
+﻿@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.feesmanager.fees_payment.make_paymentModel
+@{
+    ViewData["Title"] = "Record Fees Payments";
+}
+@section Sheets {
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+    <partial name="_DatatablesSheetFiles" />
+}
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-list-check"></i> Record Fees Payments
+        </h1>
+        <p class="text-white-50">Record Student Fees payments</p>
+    </div>
+    <div class="header-actions">
+        <div class="btn-group">
+            <a asp-page="index" class="btn btn-primary"><i class="bi bi-arrow-left me-2"></i> Back</a>
+        </div>
+    </div>
+</div>
+<div class="page-content">
+    <!-- Success Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Error Alert -->
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    <!-- Filters -->
+    <form method="post" asp-page-handler="Search">
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <label for="term" class="form-label">Term</label>
+                <select class="form-select" asp-for="recordsearch.term" asp-items="@Model.Selections.Terms">
+                    <option value="">---Select Term---</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Academic Session</label>
+                <select class="form-select" asp-for="recordsearch.sessionid" asp-items="@Model.Selections.AcademicSession">
+                    <option value="">---Select Session---</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Class</label>
+                <select class="form-select" asp-for="recordsearch.schoolclass" asp-items="@Model.Selections.SchoolClasses">
+                    <option value="">---Select Class---</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="studentRegNumber" class="form-label">Student Reg. No.</label>
+                <input type="search" class="form-control" asp-for="recordsearch.StudentRegNumber" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-success mt-4" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Create a form form recording payment -->
+    @if (Model.record?.termregid > 0)
+    {
+        <div class="card">
+            <div class="card-header">
+                <div class="h3 text-white">Complete the payment below - @(Model.record.name+" - "+ Model.record.schoolclass)</div>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="MakePayment">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" asp-for="record.name" class="form-control" readonly >
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Student Registration Number</label>
+                            <input type="text" asp-for="record.regnumber" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Term</label>
+                            <input asp-for="record.term" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Session/Year</label>
+                            <input asp-for="record.session" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">School Class</label>
+                            <input asp-for="record.schoolclass" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">School Fees</label>
+                            <input asp-for="record.feespayment" class="form-control" readonly >
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Total Amount Paid</label>
+                            <input id="balance" value="@(Math.Round(Model.record.balance,2))" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Balance Payment</label>
+                            <input asp-for="record.balance" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Amount</label>
+                            <input asp-for="record.amount" class="form-control" >
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Bank Teller(Payment Evidence)</label>
+                            <input type="file" asp-for="record.evidenncefile" class="form-control" required >
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Narration(Optional)</label>
+                            <input asp-for="record.narration" class="form-control">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-check-lg me-2"></i> Record Payment
+                    </button>
+                    <input type="hidden" asp-for="record.termregid" />
+                    <input type="hidden" asp-for="record.FeesSetUpid" />
+                    <input type="hidden" asp-for="record.balance" />
+                    </form>
+            </div>
+        </div>
+    }
+</div>
+@section Scripts{
+    <script src="~/lib/sweetalert2/sweetalert2.all.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $('#record_amount').on('input', function () {
+
+                let amount = parseFloat($(this).val()) || 0;
+                let fees = parseFloat($('#record_feespayment').val()) || 0;
+                let bal = parseFloat($('#balance').val()) || 0;
+
+                let balance = fees - (amount+bal);
+
+                // Prevent negative balance (optional)
+                if (balance < 0) {
+                    balance = 0;
+                    $('#record_balance').val(balance.toFixed(2));
+                    $('#record_amount').val(0);
+                    return Swal.fire({
+                          icon: "error",
+                          title: "Calculation Error",
+                          text: "Amount paying can not exceed fees amount!",
+                        });
+                }
+
+                $('#record_balance').val(balance.toFixed(2));
+            });
+
+        });
+    </script>
+}

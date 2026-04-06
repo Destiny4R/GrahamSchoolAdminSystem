@@ -1,0 +1,110 @@
+@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow-sm">
+                <div class="card-body text-center p-5">
+                    <!-- Icon -->
+                    <div class="mb-4">
+                        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 4rem;"></i>
+                    </div>
+
+                    <!-- Title -->
+                    <h1 class="card-title text-danger mb-3">
+                        Access Denied
+                    </h1>
+
+                    <!-- Message -->
+                    <p class="card-text text-muted mb-4">
+                        Sorry, you don't have permission to access this resource or perform this action.
+                    </p>
+
+                    <!-- Attempted Resource Info (if available) -->
+                    @if (!string.IsNullOrEmpty(Model.AttemptedResource))
+                    {
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <small>
+                                <strong>Attempted Access:</strong> <code>@Model.AttemptedResource</code>
+                            </small>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <!-- Required Permission Info (if available) -->
+                    @if (!string.IsNullOrEmpty(Model.RequiredPermission))
+                    {
+                        <div class="alert alert-info mb-4">
+                            <small>
+                                <strong>Required Permission:</strong> @Model.RequiredPermission
+                            </small>
+                        </div>
+                    }
+
+                    <!-- Timestamp -->
+                    <div class="mb-4">
+                        <small class="text-muted d-block">
+                            <i class="bi bi-clock"></i> @Model.AttemptTime.ToString("g")
+                        </small>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <a href="/" class="btn btn-primary">
+                            <i class="bi bi-house"></i> Go to Home
+                        </a>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Go Back
+                        </a>
+                    </div>
+
+                    <!-- Contact Admin -->
+                    <hr class="my-4" />
+                    <small class="text-muted">
+                        If you believe this is an error, please contact your administrator.<br />
+                        <strong>Incident ID:</strong> @Model.IncidentId
+                    </small>
+                </div>
+            </div>
+
+            <!-- Additional Help Info -->
+            <div class="card mt-3 border-light mb-5">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i> Why am I seeing this?
+                    </h6>
+                    <small class="card-text text-muted">
+                        <ul class="mb-0">
+                            <li>Your user role doesn't have permission for this resource</li>
+                            <li>Your account may not have the required permissions assigned</li>
+                            <li>The resource may have been moved or deleted</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bi {
+        display: inline-block;
+        vertical-align: middle;
+    }
+    
+    code {
+        background-color: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+    
+    .alert-warning code {
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+</style>

@@ -1,0 +1,385 @@
+/* ============================================================================
+   LOGIN PAGE - SPECIFIC STYLES
+   ============================================================================
+   Import after shared-components.css
+   Styles specific to the login page only
+   ========================================================================== */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOGIN PAGE - BACKGROUND & LAYOUT
+   ───────────────────────────────────────────────────────────────────────── */
+body.login-page {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Animated background elements */
+body.login-page::before,
+body.login-page::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    animation: float 6s ease-in-out infinite;
+}
+
+body.login-page::before {
+    width: 400px;
+    height: 400px;
+    top: -200px;
+    left: -100px;
+    animation-delay: 0s;
+}
+
+body.login-page::after {
+    width: 300px;
+    height: 300px;
+    bottom: -150px;
+    right: -50px;
+    animation-delay: 2s;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOGIN CONTAINER & CARD
+   ───────────────────────────────────────────────────────────────────────── */
+.login-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 450px;
+    padding: 20px;
+}
+
+.login-card {
+    background: var(--color-white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: slideUp 0.6s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOGIN HEADER
+   ───────────────────────────────────────────────────────────────────────── */
+.login-header {
+    background: var(--gradient-primary);
+    color: var(--color-white);
+    padding: 40px 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,50 Q300,0 600,50 T1200,50 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+    background-repeat: repeat-x;
+    opacity: 0.5;
+}
+
+.login-header-content {
+    position: relative;
+    z-index: 1;
+}
+
+.login-logo {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.login-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+}
+
+.login-header p {
+    font-size: 0.95rem;
+    opacity: 0.95;
+    margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOGIN BODY
+   ───────────────────────────────────────────────────────────────────────── */
+.login-body {
+    padding: 40px 30px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PASSWORD INPUT WRAPPER
+   ───────────────────────────────────────────────────────────────────────── */
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #667eea;
+    transition: color 0.3s ease;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: #764ba2;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   REMEMBER & FORGOT
+   ───────────────────────────────────────────────────────────────────────── */
+.remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: -0.75rem 0 1.5rem 0;
+    font-size: 0.85rem;
+}
+
+.forgot-password {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOGIN BUTTON
+   ───────────────────────────────────────────────────────────────────────── */
+.btn-login {
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    background: var(--gradient-primary);
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-md);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-login:hover {
+    box-shadow: 0 6px 24px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.btn-login:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOADING SPINNER
+   ───────────────────────────────────────────────────────────────────────── */
+.loading-spinner {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.loading-spinner.show {
+    display: block;
+}
+
+.spinner-border {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-width: 0.2em;
+    border-color: var(--color-white);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   DIVIDER
+   ───────────────────────────────────────────────────────────────────────── */
+.login-divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    color: #adb5bd;
+    font-size: 0.85rem;
+    position: relative;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 35%;
+    height: 1px;
+    background: #e9ecef;
+}
+
+.login-divider::before {
+    left: 0;
+}
+
+.login-divider::after {
+    right: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   INFO MESSAGE
+   ───────────────────────────────────────────────────────────────────────── */
+.info-message {
+    background: #e7f3ff;
+    border-left: 4px solid #667eea;
+    padding: 1rem 1.25rem;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: #0052cc;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+.info-message i {
+    margin-top: 0.15rem;
+    color: #667eea;
+    flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOGIN FOOTER
+   ───────────────────────────────────────────────────────────────────────── */
+.login-footer {
+    text-align: center;
+    padding: 1.5rem 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.login-footer i {
+    margin-right: 0.5rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   FORGOT PASSWORD MODAL
+   ───────────────────────────────────────────────────────────────────────── */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RESPONSIVE DESIGN
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .login-container {
+        max-width: 100%;
+    }
+
+    .login-header {
+        padding: 30px 20px;
+    }
+
+    .login-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .login-logo {
+        font-size: 2.5rem;
+    }
+
+    .login-body {
+        padding: 30px 20px;
+    }
+
+    .remember-forgot {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    body.login-page::before {
+        width: 200px;
+        height: 200px;
+        top: -100px;
+        left: -50px;
+    }
+
+    body.login-page::after {
+        width: 150px;
+        height: 150px;
+        bottom: -75px;
+        right: -25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-header {
+        padding: 25px 15px;
+    }
+
+    .login-body {
+        padding: 25px 15px;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .login-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .login-logo {
+        font-size: 2rem;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+        width: 30%;
+    }
+}

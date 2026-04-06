@@ -1,0 +1,191 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.roles.PermissionsExampleModel
+@{
+    ViewData["Title"] = "Permissions Example";
+}
+
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="page-title mb-1">
+                <i class="bi bi-code-square me-2"></i>Permissions Example
+            </h2>
+            <p class="text-muted mb-0">Learn how to implement permission-based authorization in your pages</p>
+        </div>
+        <a href="/admin/roles/index" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Roles
+        </a>
+    </div>
+</div>
+
+<!-- Welcome Alert -->
+<div class="alert alert-success" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <strong>Success!</strong> You have the "View" permission and can access this page. Welcome, <strong>@Model.CurrentUserName</strong>!
+</div>
+
+<!-- Usage Guide -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-book-fill me-2"></i>How to Use Permission-Based Authorization
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-3">Step 1: Add the Attribute to Your Page Model</h6>
+                <pre class="bg-light p-3 rounded"><code>[Authorize]
+[RequirePermission("View")]
+public class YourPageModel : PageModel
+{
+    // Your page code here
+}</code></pre>
+
+                <h6 class="mb-3 mt-4">Step 2: Available Permission Options</h6>
+                <ul class="list-group">
+                    @foreach (var example in Model.Examples)
+                    {
+                        <li class="list-group-item">
+                            <code>@example</code>
+                        </li>
+                    }
+                </ul>
+
+                <h6 class="mb-3 mt-4">Step 3: Understanding Permission Logic</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Attribute</th>
+                                <th>Logic</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>[RequirePermission("Create")]</code></td>
+                                <td>Single</td>
+                                <td>User must have Create permission</td>
+                            </tr>
+                            <tr>
+                                <td><code>[RequirePermission("Create", "Edit")]</code></td>
+                                <td>AND (default)</td>
+                                <td>User must have BOTH Create AND Edit</td>
+                            </tr>
+                            <tr>
+                                <td><code>[RequirePermission(false, "Create", "Edit")]</code></td>
+                                <td>OR</td>
+                                <td>User must have Create OR Edit (at least one)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h6 class="mb-3 mt-4">Step 4: Programmatic Permission Check</h6>
+                <pre class="bg-light p-3 rounded"><code>// Inject IPermissionService in your page
+private readonly IPermissionService _permissionService;
+
+// Check if user has permission
+var hasPermission = await _permissionService.UserHasPermissionAsync(User, "Create");
+
+if (hasPermission)
+{
+    // User can create
+}
+else
+{
+    // Show error or redirect
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightbulb-fill me-2"></i>Quick Reference
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>System Permissions:</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-plus-circle-fill text-success me-2"></i>
+                        <strong>Create</strong> - Add new records
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-pencil-fill text-primary me-2"></i>
+                        <strong>Edit</strong> - Modify existing records
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-trash-fill text-danger me-2"></i>
+                        <strong>Delete</strong> - Remove records
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-eye-fill text-info me-2"></i>
+                        <strong>View</strong> - Read access to data
+                    </li>
+                </ul>
+
+                <hr />
+
+                <h6>System Roles:</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <span class="badge bg-danger">Admin</span>
+                        <br /><small class="text-muted">All permissions</small>
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-primary">Accountant</span>
+                        <br /><small class="text-muted">Create, Edit, View</small>
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-success">Cashier</span>
+                        <br /><small class="text-muted">View only</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle-fill me-2"></i>Best Practices
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li class="mb-2">Always use <code>[Authorize]</code> with <code>[RequirePermission]</code></li>
+                    <li class="mb-2">Use specific permissions for each action</li>
+                    <li class="mb-2">Test with different user roles</li>
+                    <li class="mb-2">Log permission-based access attempts</li>
+                    <li class="mb-0">Keep permissions granular and clear</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-header {
+        background: linear-gradient(135deg, #1a2b6d 0%, #0b1437 100%);
+        color: white;
+        padding: 1.25rem;
+    }
+
+    .page-title {
+        color: var(--navy);
+        font-weight: 700;
+    }
+
+    pre {
+        border-left: 4px solid var(--gold);
+    }
+
+    code {
+        color: #e83e8c;
+    }
+</style>

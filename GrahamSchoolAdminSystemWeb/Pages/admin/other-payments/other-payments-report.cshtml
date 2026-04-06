@@ -1,0 +1,327 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.other_payments.other_payments_reportModel
+@{
+    ViewData["Title"] = "Other Payments Report";
+}
+@section Sheets {
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DataTablesSheetFiles" />
+}
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-receipt"></i> Other Payments Report
+        </h1>
+        <p class="text-white-50">Manage Other Payments</p>
+    </div>
+    <div class="header-actions">
+        <div class="btn-group">
+            <a asp-page="/admin/other-payments/fees-payment/index" class="btn btn-primary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+        </div>
+    </div>
+</div>
+<div class="page-content">
+
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Filters Section -->
+    <div class="card mb-4">
+        <div class="card-header" style="background-color: #0d6efd; color: white;">
+            <h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Filters</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label asp-for="SessionId" class="form-label">Session</label>
+                    <select class="form-select" asp-for="SessionId" asp-items="@Model.Selections.AcademicSession">
+                        <option value="">-- All Sessions --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="Term" class="form-label">Term</label>
+                    <select class="form-select" asp-for="Term" asp-items="@Model.Selections.Terms">
+                        <option value="">-- All Terms --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="ClassId" class="form-label">Class</label>
+                    <select class="form-select" asp-for="ClassId" asp-items="@Model.Selections.SchoolClasses">
+                        <option value="">-- All Classes --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="PaymentItemId" class="form-label">Payment Item</label>
+                    <select class="form-select" asp-for="PaymentItemId" asp-items="@Model.Selections.PaymentItems">
+                        <option value="">-- All Items --</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border-color: #0d6efd;">
+                        <i class="bi bi-search me-2"></i>Generate Report
+                    </button>
+                    <a href="@Url.Page("other-payments-report")" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                    </a>
+                    @if (Model.AggregatedReportData.Any())
+                    {
+                        <div class="btn-group ms-auto" role="group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-download me-2"></i>Export
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="@Url.Page("other-payments-report", "Export", new { sessionId = Model.SessionId, term = Model.Term, classId = Model.ClassId, paymentItemId = Model.PaymentItemId, paymentStatus = Model.PaymentStatus, paymentState = Model.PaymentState, format = "csv" })">
+                                        <i class="bi bi-file-earmark-csv me-2"></i>Export to CSV
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="@Url.Page("other-payments-report", "Export", new { sessionId = Model.SessionId, term = Model.Term, classId = Model.ClassId, paymentItemId = Model.PaymentItemId, paymentStatus = Model.PaymentStatus, paymentState = Model.PaymentState, format = "excel" })">
+                                        <i class="bi bi-file-earmark-excel me-2"></i>Export to Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="@Url.Page("other-payments-report", "Export", new { sessionId = Model.SessionId, term = Model.Term, classId = Model.ClassId, paymentItemId = Model.PaymentItemId, paymentStatus = Model.PaymentStatus, paymentState = Model.PaymentState, format = "pdf" })">
+                                        <i class="bi bi-file-earmark-pdf me-2"></i>Export to PDF
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    @if (Model.AggregatedReportData.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Total Payments</h6>
+                        <h3 class="card-title" style="color: #0d6efd;">@Model.TotalRecords</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Expected Amount</h6>
+                        <h3 class="card-title" style="color: #0d6efd;">₦@Model.TotalExpected.ToString("N2")</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Actual Collected</h6>
+                        <h3 class="card-title" style="color: #28a745;">₦@Model.TotalCollected.ToString("N2")</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Outstanding</h6>
+                        <h3 class="card-title" style="color: #dc3545;">₦@Model.TotalOutstanding.ToString("N2")</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collection Percentage -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-subtitle mb-0">Overall Collection Rate</h6>
+                            <h3 class="card-title mb-0" style="color: #0d6efd;">@Model.CollectionPercentage%</h3>
+                        </div>
+                        <div class="progress mt-3" style="height: 25px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: @Model.CollectionPercentage%; background-color: #0d6efd;"
+                                 aria-valuenow="@Model.CollectionPercentage"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                @Model.CollectionPercentage%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Table -->
+        <div class="card">
+            <div class="card-header" style="background-color: #0d6efd; color: white;">
+                <h5 class="card-title mb-0"><i class="bi bi-table me-2"></i>Report Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="otherPayTable">
+                        <thead style="background-color: #f8f9fa; border-top: 3px solid #0d6efd;">
+                            <tr>
+                                <th>Session</th>
+                                <th>Term</th>
+                                <th>Class</th>
+                                <th>Payment Item</th>
+                                <th class="text-center">No. of Students</th>
+                                <th class="text-right">Fee/Student</th>
+                                <th class="text-right">Expected Amount</th>
+                                <th class="text-right">Amount Collected</th>
+                                <th class="text-right">Outstanding</th>
+                                <th class="text-center">Collection %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.AggregatedReportData)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@item.Session</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background-color: #0d6efd;">@item.Term</span>
+                                    </td>
+                                    <td>@item.ClassName</td>
+                                    <td>@item.PaymentItem</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">@item.StudentCount</span>
+                                    </td>
+                                    <td class="text-right">
+                                        @item.FeePerStudent
+                                    </td>
+                                    <td class="text-right">
+                                        <strong>₦@item.ExpectedAmount.ToString("N2")</strong>
+                                    </td>
+                                    <td class="text-right">
+                                        <span class="text-success">₦@item.PaidAmount.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-right">
+                                        <span class="text-danger">₦@item.OutstandingAmount.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.CollectionPercentage >= 100)
+                                        {
+                                            <span class="badge" style="background-color: #28a745;">@item.CollectionPercentage%</span>
+                                        }
+                                        else if (item.CollectionPercentage >= 75)
+                                        {
+                                            <span class="badge" style="background-color: #0d6efd;">@item.CollectionPercentage%</span>
+                                        }
+                                        else if (item.CollectionPercentage >= 50)
+                                        {
+                                            <span class="badge" style="background-color: #ffc107;">@item.CollectionPercentage%</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">@item.CollectionPercentage%</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="4">TOTALS</td>
+                                <td class="text-center">-</td>
+                                <td class="text-right">-</td>
+                                <td class="text-right">₦@Model.TotalExpected.ToString("N2")</td>
+                                <td class="text-right">₦@Model.TotalCollected.ToString("N2")</td>
+                                <td class="text-right">₦@Model.TotalOutstanding.ToString("N2")</td>
+                                <td class="text-center">
+                                    <span class="badge" style="background-color: #0d6efd;">@Model.CollectionPercentage%</span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle me-2"></i>
+            No data available. Please generate the report using the filters above.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_DataTablesScriptsFiles" />
+    <script>
+        $(document).ready(function(){
+            $('#otherPayTable').DataTable({
+                dom: 'Bfrtip',
+                searching: false,
+                paging: false,
+                info: false,
+                buttons: [
+                    {
+                        extend: 'copy',
+                        className: 'btn btn-secondary'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-success'
+                    },
+                    {
+                        extend: 'csv',
+                        className: 'btn btn-info'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-danger'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-primary'
+                    }
+                ]
+            });
+        })
+        // Restore filter values on page load
+        @if (Model.SessionId.HasValue)
+        {
+            <text>
+            document.getElementById('SessionId').value = '@Model.SessionId';
+            </text>
+        }
+        @if (Model.Term.HasValue)
+        {
+            <text>
+            document.getElementById('Term').value = '@Model.Term';
+            </text>
+        }
+        @if (Model.ClassId.HasValue)
+        {
+            <text>
+            document.getElementById('ClassId').value = '@Model.ClassId';
+            </text>
+        }
+        @if (Model.PaymentItemId.HasValue)
+        {
+            <text>
+            document.getElementById('PaymentItemId').value = '@Model.PaymentItemId';
+            </text>
+        }
+    </script>
+
+}
