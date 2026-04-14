@@ -57,6 +57,11 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
         /// </summary>
         Task<ServiceResponse<bool>> DeleteStudentsTermRegistrationAsync(List<int> id);
 
+        /// <summary>
+        /// Check if a term registration has any associated payment records
+        /// </summary>
+        Task<bool> HasPaymentForTermRegistrationAsync(int termRegId);
+
         Task<List<TermRegistration>> GetOldTermRegRecordsAsync(SelectOptionsData Selectsearch);
     }
 }

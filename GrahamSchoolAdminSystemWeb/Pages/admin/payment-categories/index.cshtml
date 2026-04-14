@@ -1,0 +1,188 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.payment_categories.indexModel
+@{
+    ViewData["Title"] = "Payment Categories";
+    await Permissions.InitializeAsync(User);
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DatatablesSheetFiles" />
+}
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-tag-fill"></i> Payment Categories
+        </h1>
+        <p class="text-white">Manage payment categories for fee organization</p>
+    </div>
+    <div class="header-actions">
+        @if (Permissions.CanCreate)
+        {
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="PaymentCategory.resetForm()">
+            <i class="bi bi-plus-circle me-2"></i>Add Category
+        </button>
+        }
+    </div>
+</div>
+
+<div class="page-content">
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="search-filter-area">
+        <div class="search-group">
+            <label for="categorySearchInput">Search Categories:</label>
+            <input type="text" id="categorySearchInput" class="form-control" placeholder="Search by category name...">
+        </div>
+    </div>
+
+    <div class="datatable-container">
+        <table id="paymentCategoriesTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th class="col-1">#</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th class="col-1">Status</th>
+                    <th class="col-2">Created</th>
+                    <th class="col-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Modal -->
+@if (Permissions.CanCreate)
+{
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-tag-fill me-2"></i>Add Payment Category
+                    </h5>
+                    <small>Create a new payment category</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="CategoryModel.Name">
+                            <i class="bi bi-pencil-square me-1"></i>Category Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" asp-for="CategoryModel.Name"
+                               placeholder="Enter category name" required maxlength="100">
+                        <small class="form-text text-muted">Maximum 100 characters</small>
+                        <span class="invalid-feedback" asp-validation-for="CategoryModel.Name"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="CategoryModel.Description">
+                            <i class="bi bi-card-text me-1"></i>Description
+                        </label>
+                        <textarea class="form-control" asp-for="CategoryModel.Description" rows="3"
+                                  placeholder="Enter description (optional)" maxlength="300"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Edit Modal -->
+@if (Permissions.CanEdit)
+{
+<div class="modal fade" id="categoryEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-tag-fill me-2"></i>Edit Payment Category
+                    </h5>
+                    <small>Update payment category information</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    <input type="hidden" asp-for="CategoryModel.Id" id="editCategoryId" />
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="CategoryModel.Name">
+                            <i class="bi bi-pencil-square me-1"></i>Category Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" asp-for="CategoryModel.Name" id="editCategoryName"
+                               placeholder="Enter category name" required maxlength="100">
+                        <span class="invalid-feedback" asp-validation-for="CategoryModel.Name"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label" asp-for="CategoryModel.Description">
+                            <i class="bi bi-card-text me-1"></i>Description
+                        </label>
+                        <textarea class="form-control" asp-for="CategoryModel.Description" id="editCategoryDescription" rows="3"
+                                  placeholder="Enter description (optional)" maxlength="300"></textarea>
+                    </div>
+                    <div class="form-group mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="CategoryModel.IsActive" id="editCategoryIsActive" checked>
+                            <label class="form-check-label" for="editCategoryIsActive">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <partial name="_DatatablesScriptsFiles" />
+    <script>
+        window.userPermissions = {
+            canCreate: @Json.Serialize(Permissions.CanCreate),
+            canEdit: @Json.Serialize(Permissions.CanEdit),
+            canDelete: @Json.Serialize(Permissions.CanDelete)
+        };
+    </script>
+    <script src="~/js/appmain.js"></script>
+}

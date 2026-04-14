@@ -1,0 +1,136 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.payment_reports.class_reportModel
+@inject GrahamSchoolAdminSystemWeb.Helpers.ViewPermissionService Permissions
+@{
+    ViewData["Title"] = "Class Payment Report";
+    await Permissions.InitializeAsync(User);
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DataTablesSheetFiles" />
+}
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-clipboard-data"></i> Class Payment Report
+        </h1>
+        <p class="text-white">View expected vs actual payments per class</p>
+    </div>
+</div>
+
+<div class="page-content">
+    <!-- Filters Row 1 -->
+    <div class="row g-3 mb-2">
+        <div class="col-md-3">
+            <label for="rptSession">Session: <span class="text-danger">*</span></label>
+            <select id="rptSession" class="form-select">
+                <option value="">-- Select Session --</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label for="rptTerm">Term:</label>
+            <select id="rptTerm" class="form-select">
+                <option value="">All Terms</option>
+                <option value="1">First Term</option>
+                <option value="2">Second Term</option>
+                <option value="3">Third Term</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="rptClass">Class:</label>
+            <select id="rptClass" class="form-select">
+                <option value="">All Classes</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="rptSubClass">Sub-Class:</label>
+            <select id="rptSubClass" class="form-select">
+                <option value="">All Sub-Classes</option>
+            </select>
+        </div>
+        <div class="col-md-1"></div>
+    </div>
+    <!-- Filters Row 2 -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label for="rptCategory">Category:</label>
+            <select id="rptCategory" class="form-select">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="rptPaymentItem">Payment Item:</label>
+            <select id="rptPaymentItem" class="form-select">
+                <option value="">All Items</option>
+            </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button id="btnLoadClassReport" class="btn btn-primary w-100">
+                <i class="bi bi-funnel"></i> Go
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div id="classReportSummary" class="row g-3 mb-3" style="display:none;">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Total Students</h6>
+                    <h3 id="sumTotalStudents" class="text-primary">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Students Paid</h6>
+                    <h3 id="sumStudentsPaid" class="text-success">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Total Expected</h6>
+                    <h3 id="sumTotalExpected" class="text-info">₦0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Outstanding</h6>
+                    <h3 id="sumTotalOutstanding" class="text-danger">₦0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DataTable -->
+    <div class="datatable-container mt-3">
+        <table id="classReportTable" class="table table-hover" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Admission No.</th>
+                    <th>Category</th>
+                    <th>Payment Item</th>
+                    <th>Expected (₦)</th>
+                    <th>Paid (₦)</th>
+                    <th>Outstanding (₦)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_DatatablesScriptsFiles" />
+    <script src="~/js/appmain.js"></script>
+}

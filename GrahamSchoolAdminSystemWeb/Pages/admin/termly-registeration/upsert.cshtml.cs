@@ -1,26 +1,38 @@
+using GrahamSchoolAdminSystemAccess;
 using GrahamSchoolAdminSystemAccess.IServiceRepo;
+using GrahamSchoolAdminSystemModels.Models;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using GrahamSchoolAdminSystemWeb.Attributes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 
 namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
 {
+    [Authorize]
+    [RequirePermission(SD.Permissions.VIEW)]
     public class upsertModel : PageModel
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IViewsSelectionOptions _viewsSelectionOptions;
 
         public ViewSelections Selections { get; set; } = new();
 
         [BindProperty]
         public TermRegistrationViewModel termReg { get; set; } = new();
-        public upsertModel(IUnitOfWork unitOfWork)
+
+        public bool HasPayment { get; set; }
+
+        public upsertModel(IUnitOfWork unitOfWork, IViewsSelectionOptions viewsSelectionOptions)
         {
-            this._unitOfWork = unitOfWork;
-            Selections = _unitOfWork.FinanceServices.GetFeesSetupSelectionsAsync().Result;
+            _unitOfWork = unitOfWork;
+            _viewsSelectionOptions = viewsSelectionOptions;
         }
         public async Task<IActionResult> OnGet(int id)
         {
+            await LoadSelectionsAsync();
             if (id > 0)
             {
                 termReg = _unitOfWork.TermRegistrationServices.GetStudentTermRegistrationByIdAsync(id).Result;
@@ -29,12 +41,21 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
                     TempData["Error"] = "Student not found, please check and try again";
                     return RedirectToPage("index");
                 }
+
+                // Check if payments exist for this registration
+                HasPayment = await _unitOfWork.TermRegistrationServices.HasPaymentForTermRegistrationAsync(id);
+                if (HasPayment)
+                {
+                    TempData["Error"] = "This registration cannot be edited because payment records exist for it.";
+                    return RedirectToPage("index");
+                }
             }
             return Page();
         }
 
         public async Task<IActionResult> OnPostSearchAsync(string termregnumber)
         {
+            await LoadSelectionsAsync();
             if (string.IsNullOrEmpty(termregnumber))
             {
                 TempData["Error"] = "Provide student registration number before proceeding";
@@ -62,12 +83,21 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
         {
             if (!ModelState.IsValid)
             {
+                await LoadSelectionsAsync();
                 TempData["Error"] = "Provide select all areas";
                 return Page();
             }
 
             if (termReg.Id > 0)
             {
+                // Block update if payments exist
+                var hasPayment = await _unitOfWork.TermRegistrationServices.HasPaymentForTermRegistrationAsync((int)termReg.Id);
+                if (hasPayment)
+                {
+                    TempData["Error"] = "This registration cannot be edited because payment records exist for it.";
+                    return RedirectToPage("index");
+                }
+
                 var result = _unitOfWork.TermRegistrationServices.UpdateStudentTermRegistrationAsync(termReg).Result;
                 if (result.Succeeded)
                 {
@@ -86,6 +116,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
                     return RedirectToPage("index");
                 }
                 TempData["Error"] = result.Message;
+                await LoadSelectionsAsync();
                 return Page();
             }
             else
@@ -107,8 +138,18 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
                     return RedirectToPage("index");
                 }
                 TempData["Error"] = result.Message;
+                await LoadSelectionsAsync();
                 return Page();
             }
+        }
+
+        private async Task LoadSelectionsAsync()
+        {
+            Selections.SchoolClasses = await _viewsSelectionOptions.GetSchoolClassesForDropdownAsync();
+            Selections.AcademicSession = await _viewsSelectionOptions.GetSessionsForDropdownAsync();
+            Selections.SubClass = await _viewsSelectionOptions.GetSchoolSubclassesForDropdownAsync();
+            Selections.Terms = Enum.GetValues<GetEnums.Term>()
+                .Select(t => new SelectListItem { Value = ((int)t).ToString(), Text = t.ToString() });
         }
 
         private string GetClientIpAddress()

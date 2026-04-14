@@ -1,6 +1,7 @@
 ﻿using GrahamSchoolAdminSystemModels.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace GrahamSchoolAdminSystemAccess.Data
 {
@@ -12,52 +13,39 @@ namespace GrahamSchoolAdminSystemAccess.Data
         }
 
         public DbSet<StudentTable> Students { get; set; }
-        public DbSet<TermlyFeesSetup> TermlyFeesSetups { get; set; }
         public DbSet<SchoolClasses> SchoolClasses { get; set; }
         public DbSet<SchoolSubClass> SchoolSubClasses { get; set; }
         public DbSet<SessionYear> SessionYears { get; set; }
         public DbSet<TermRegistration> TermRegistrations { get; set; }
-        public DbSet<FeesPaymentTable> FeesPayments { get; set; }
-        public DbSet<PTAFeesSetup> PTAFeesSetups { get; set; }
-        public DbSet<PTAFeesPayments> PTAFeesPayments { get; set; }
         public DbSet<PositionTable> PositionTables { get; set; }
         public DbSet<AppSettings> AppSettings { get; set; }
         public DbSet<EmployeesTable> Employees { get; set; }
         public DbSet<LogsTable> LogsTables { get; set; }
-        public DbSet<OtherPayItemsTable> OtherPayItemsTable { get; set; }
-        public DbSet<OtherPayFeesSetUp> OtherPayFeesSetUp { get; set; }
-        public DbSet<OtherPayment> OtherPayments { get; set; }
 
-        // Join tables
-        public DbSet<EmployeePosition> EmployeePositions { get; set; }
-        [Obsolete("PositionRole is deprecated. Use UserRole and RolePermission instead.")]
+        // Payment system tables
+        public DbSet<PaymentCategory> PaymentCategories { get; set; }
+        public DbSet<PaymentItem> PaymentItems { get; set; }
+        public DbSet<PaymentSetup> PaymentSetups { get; set; }
+        public DbSet<StudentPayment> StudentPayments { get; set; }
+        public DbSet<StudentPaymentItem> StudentPaymentItems { get; set; }
+
+        // Position-based authorization tables
         public DbSet<PositionRole> PositionRoles { get; set; }
-
-        // New roles and permissions system
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
-        public DbSet<UserRole> UserRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // Configure composite keys for join entities
-            builder.Entity<EmployeePosition>()
-                .HasKey(ep => new { ep.EmployeeId, ep.PositionId });
+            // Employee → Position (single FK)
+            builder.Entity<EmployeesTable>()
+                .HasOne(e => e.Position)
+                .WithMany(p => p.Employees)
+                .HasForeignKey(e => e.PositionId)
+                .OnDelete(DeleteBehavior.SetNull);
 
-            builder.Entity<EmployeePosition>()
-                .HasOne(ep => ep.Employee)
-                .WithMany(e => e.EmployeePositions)
-                .HasForeignKey(ep => ep.EmployeeId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<EmployeePosition>()
-                .HasOne(ep => ep.Position)
-                .WithMany(p => p.EmployeePositions)
-                .HasForeignKey(ep => ep.PositionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
+            // PositionRole composite key (Position ↔ Role many-to-many)
             builder.Entity<PositionRole>()
                 .HasKey(pr => new { pr.PositionId, pr.RoleId });
 
@@ -69,13 +57,11 @@ namespace GrahamSchoolAdminSystemAccess.Data
 
             builder.Entity<PositionRole>()
                 .HasOne(pr => pr.Role)
-                .WithMany()
+                .WithMany(r => r.PositionRoles)
                 .HasForeignKey(pr => pr.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure new roles and permissions system
-
-            // RolePermission composite key
+            // RolePermission composite key (Role ↔ Permission many-to-many)
             builder.Entity<RolePermission>()
                 .HasKey(rp => new { rp.RoleId, rp.PermissionId });
 
@@ -90,24 +76,50 @@ namespace GrahamSchoolAdminSystemAccess.Data
                 .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            builder.Entity<AppSettings>()
+               .HasIndex(a => a.ApplicationUserId)
+               .IsUnique();
 
-            // UserRole composite key
-            builder.Entity<UserRole>()
-                .HasKey(ur => new { ur.UserId, ur.RoleId });
+            // PaymentSetup: unique constraint on (PaymentItemId + SessionId + Term + ClassId)
+            builder.Entity<PaymentSetup>()
+                .HasIndex(ps => new { ps.PaymentItemId, ps.SessionId, ps.Term, ps.ClassId })
+                .IsUnique();
 
-            builder.Entity<UserRole>()
-                .HasOne(ur => ur.User)
-                .WithMany(u => u.UserRoles)
-                .HasForeignKey(ur => ur.UserId)
+            // PaymentItem → PaymentCategory
+            builder.Entity<PaymentItem>()
+                .HasOne(pi => pi.PaymentCategory)
+                .WithMany(pc => pc.PaymentItems)
+                .HasForeignKey(pi => pi.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // PaymentSetup → PaymentItem
+            builder.Entity<PaymentSetup>()
+                .HasOne(ps => ps.PaymentItem)
+                .WithMany(pi => pi.PaymentSetups)
+                .HasForeignKey(ps => ps.PaymentItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // StudentPayment → TermRegistration
+            builder.Entity<StudentPayment>()
+                .HasOne(sp => sp.TermRegistration)
+                .WithMany()
+                .HasForeignKey(sp => sp.TermRegId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // StudentPaymentItem → StudentPayment
+            builder.Entity<StudentPaymentItem>()
+                .HasOne(spi => spi.StudentPayment)
+                .WithMany(sp => sp.PaymentItems)
+                .HasForeignKey(spi => spi.StudentPaymentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<UserRole>()
-                .HasOne(ur => ur.Role)
-                .WithMany(r => r.UserRoles)
-                .HasForeignKey(ur => ur.RoleId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Additional model configuration can go here if needed
+            // StudentPaymentItem → PaymentItem
+            builder.Entity<StudentPaymentItem>()
+                .HasOne(spi => spi.PaymentItem)
+                .WithMany()
+                .HasForeignKey(spi => spi.PaymentItemId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

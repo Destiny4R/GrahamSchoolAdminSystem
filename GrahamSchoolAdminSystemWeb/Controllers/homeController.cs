@@ -1,10 +1,12 @@
 using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemModels.DTOs;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GrahamSchoolAdminSystemWeb.Controllers
 {
+    [Authorize]
     public class homeController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -30,22 +32,6 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
             try
             {
                 return await ExecuteDataTableAsync<SchoolClassesDto>(_unitOfWork.SystemActivities.GetSchoolClassesAsync,
-                "Error retrieving categories");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading school classes DataTable");
-                return Json(new { error = "Error loading data" });
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> GetFeesSetUplist()
-        {
-
-            try
-            {
-                return await ExecuteDataTableAsync<dynamic>(_unitOfWork.FinanceServices.GetFeesSetupAsync,
                 "Error retrieving categories");
             }
             catch (Exception ex)
@@ -158,45 +144,53 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> GetTermlyFeesPayements()
+        public async Task<IActionResult> GetEmployeesDataTable()
         {
             try
             {
-                var request = new DataTableRequest
-                {
-                    Draw = int.TryParse(Request.Form["draw"].FirstOrDefault(), out var d) ? d : 0,
-                    Start = string.IsNullOrEmpty(Request.Form["start"].FirstOrDefault()) ? 0 : Convert.ToInt32(Request.Form["start"].FirstOrDefault()),
-                    Length = string.IsNullOrEmpty(Request.Form["length"].FirstOrDefault()) ? 0 : Convert.ToInt32(Request.Form["length"].FirstOrDefault()),
-                    SortColumn = 0,
-                    SortDirection = Request.Form["order[0][dir]"].FirstOrDefault() ?? "asc",
-                    SearchValue = Request.Form["search[value]"].FirstOrDefault()
-                };
+                return await ExecuteDataTableAsync<EmployeeViewModel>(_unitOfWork.UsersServices.GetEmployeesAsync,
+                    "Error retrieving employees");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading employees DataTable");
+                return Json(new { error = "Error loading data" });
+            }
+        }
 
-                // Extract filter parameters if they exist
-                int? termFilter = null;
-                int? sessionFilter = null;
-                int? classFilter = null;
-                int? subclassFilter = null;
+        [HttpPost]
+        public async Task<IActionResult> GetPaymentCategoriesDataTable()
+        {
+            try
+            {
+                return await ExecuteDataTableAsync<dynamic>(_unitOfWork.PaymentCategoryService.GetPaymentCategoriesAsync,
+                    "Error retrieving payment categories");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading payment categories DataTable");
+                return Json(new { error = "Error loading data" });
+            }
+        }
 
-                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
-                    termFilter = term;
-                if (Request.Form.ContainsKey("session") && int.TryParse(Request.Form["session"].FirstOrDefault(), out int session) && session > 0)
-                    sessionFilter = session;
-                if (Request.Form.ContainsKey("schoolclass") && int.TryParse(Request.Form["schoolclass"].FirstOrDefault(), out int schoolclass) && schoolclass > 0)
-                    classFilter = schoolclass;
-                if (Request.Form.ContainsKey("subclass") && int.TryParse(Request.Form["subclass"].FirstOrDefault(), out int subclass) && subclass > 0)
-                    subclassFilter = subclass;
+        [HttpPost]
+        public async Task<IActionResult> GetPaymentItemsDataTable()
+        {
+            try
+            {
+                var request = ParseRequest();
 
-                var (data, recordsTotal, recordsFiltered) = await _unitOfWork.FeesPaymentServices.GetFeesPaymentsAsync(
+                int? categoryFilter = null;
+                if (Request.Form.ContainsKey("category") && int.TryParse(Request.Form["category"].FirstOrDefault(), out int cat) && cat > 0)
+                    categoryFilter = cat;
+
+                var (data, recordsTotal, recordsFiltered) = await _unitOfWork.PaymentItemService.GetPaymentItemsAsync(
                     skip: request.Start ?? 0,
                     pageSize: request.Length ?? 10,
                     searchTerm: request.SearchValue ?? "",
                     sortColumn: request.SortColumn,
                     sortDirection: request.SortDirection ?? "asc",
-                    termFilter: termFilter,
-                    sessionFilter: sessionFilter,
-                    classFilter: classFilter,
-                    subclassFilter: subclassFilter
+                    categoryFilter: categoryFilter
                 );
 
                 return new JsonResult(new
@@ -209,51 +203,38 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading term registrations DataTable");
+                _logger.LogError(ex, "Error loading payment items DataTable");
                 return Json(new { error = "Error loading data" });
             }
         }
-        //GetPTAPaymentsAsync
+
         [HttpPost]
-        public async Task<IActionResult> GetPTAPayments()
+        public async Task<IActionResult> GetPaymentSetupsDataTable()
         {
             try
             {
-                var request = new DataTableRequest
-                {
-                    Draw = int.TryParse(Request.Form["draw"].FirstOrDefault(), out var d) ? d : 0,
-                    Start = string.IsNullOrEmpty(Request.Form["start"].FirstOrDefault()) ? 0 : Convert.ToInt32(Request.Form["start"].FirstOrDefault()),
-                    Length = string.IsNullOrEmpty(Request.Form["length"].FirstOrDefault()) ? 0 : Convert.ToInt32(Request.Form["length"].FirstOrDefault()),
-                    SortColumn = 0,
-                    SortDirection = Request.Form["order[0][dir]"].FirstOrDefault() ?? "asc",
-                    SearchValue = Request.Form["search[value]"].FirstOrDefault()
-                };
+                var request = ParseRequest();
 
-                // Extract filter parameters if they exist
-                int? termFilter = null;
                 int? sessionFilter = null;
+                int? termFilter = null;
                 int? classFilter = null;
-                int? subclassFilter = null;
 
-                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
-                    termFilter = term;
                 if (Request.Form.ContainsKey("session") && int.TryParse(Request.Form["session"].FirstOrDefault(), out int session) && session > 0)
                     sessionFilter = session;
-                if (Request.Form.ContainsKey("schoolclass") && int.TryParse(Request.Form["schoolclass"].FirstOrDefault(), out int schoolclass) && schoolclass > 0)
-                    classFilter = schoolclass;
-                if (Request.Form.ContainsKey("subclass") && int.TryParse(Request.Form["subclass"].FirstOrDefault(), out int subclass) && subclass > 0)
-                    subclassFilter = subclass;
+                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
+                    termFilter = term;
+                if (Request.Form.ContainsKey("schoolclass") && int.TryParse(Request.Form["schoolclass"].FirstOrDefault(), out int cls) && cls > 0)
+                    classFilter = cls;
 
-                var (data, recordsTotal, recordsFiltered) = await _unitOfWork.PTAPaymentServices.GetPTAPaymentsAsync(
+                var (data, recordsTotal, recordsFiltered) = await _unitOfWork.PaymentSetupService.GetPaymentSetupsAsync(
                     skip: request.Start ?? 0,
                     pageSize: request.Length ?? 10,
                     searchTerm: request.SearchValue ?? "",
                     sortColumn: request.SortColumn,
                     sortDirection: request.SortDirection ?? "asc",
-                    termFilter: termFilter,
                     sessionFilter: sessionFilter,
-                    classFilter: classFilter,
-                    subclassFilter: subclassFilter
+                    termFilter: termFilter,
+                    classFilter: classFilter
                 );
 
                 return new JsonResult(new
@@ -266,98 +247,46 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading term registrations DataTable");
-                return Json(new { error = "Error loading data" });
-            }
-        }
-
-
-        [HttpPost]
-        public async Task<IActionResult> GetPTAFeesSetupAsync()
-        {
-            try
-            {
-                return await ExecuteDataTableAsync<object>(_unitOfWork.FinanceServices.GetPTAFeesSetupAsync,
-                    "Error retrieving PTA fees set up");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading PTA fees set up DataTable");
+                _logger.LogError(ex, "Error loading payment setups DataTable");
                 return Json(new { error = "Error loading data" });
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> GetOtherItemsListAsync()
+        public async Task<IActionResult> GetStudentPaymentsDataTable()
         {
             try
             {
-                return await ExecuteDataTableAsync<OtherPayItemsDtos>(_unitOfWork.OtherPaymentServices.GetOtherItemsListAsync,
-                    "Error retrieving other items list");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading other payment items DataTable");
-                return Json(new { error = "Error loading data" });
-            }
-        }
+                var request = ParseRequest();
 
-        [HttpPost]
-        public async Task<IActionResult> GetOtherFeesSetup()
-        {
-            try
-            {
-                return await ExecuteDataTableAsync<dynamic>(_unitOfWork.FinanceServices.GetOtherFeesSetupAsync,
-                    "Error retrieving other items list");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading other fees setup DataTable");
-                return Json(new { error = "Error loading data" });
-            }
-        }
-
-        //GetOtherPaymentsAsync
-        [HttpPost]
-        public async Task<IActionResult> GetOtherFeesPaymentsAsync()
-        {
-            try
-            {
-                var request = new DataTableRequest
-                {
-                    Draw = int.TryParse(Request.Form["draw"].FirstOrDefault(), out var d) ? d : 0,
-                    Start = string.IsNullOrEmpty(Request.Form["start"].FirstOrDefault()) ? 0 : Convert.ToInt32(Request.Form["start"].FirstOrDefault()),
-                    Length = string.IsNullOrEmpty(Request.Form["length"].FirstOrDefault()) ? 0 : Convert.ToInt32(Request.Form["length"].FirstOrDefault()),
-                    SortColumn = 0,
-                    SortDirection = Request.Form["order[0][dir]"].FirstOrDefault() ?? "asc",
-                    SearchValue = Request.Form["search[value]"].FirstOrDefault()
-                };
-
-                // Extract filter parameters if they exist
-                int? termFilter = null;
                 int? sessionFilter = null;
+                int? termFilter = null;
                 int? classFilter = null;
-                int? subclassFilter = null;
+                string? statusFilter = null;
+                int? stateFilter = null;
 
-                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
-                    termFilter = term;
                 if (Request.Form.ContainsKey("session") && int.TryParse(Request.Form["session"].FirstOrDefault(), out int session) && session > 0)
                     sessionFilter = session;
-                if (Request.Form.ContainsKey("schoolclass") && int.TryParse(Request.Form["schoolclass"].FirstOrDefault(), out int schoolclass) && schoolclass > 0)
-                    classFilter = schoolclass;
-                if (Request.Form.ContainsKey("subclass") && int.TryParse(Request.Form["subclass"].FirstOrDefault(), out int subclass) && subclass > 0)
-                    subclassFilter = subclass;
+                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
+                    termFilter = term;
+                if (Request.Form.ContainsKey("schoolclass") && int.TryParse(Request.Form["schoolclass"].FirstOrDefault(), out int cls) && cls > 0)
+                    classFilter = cls;
+                if (Request.Form.ContainsKey("status") && !string.IsNullOrWhiteSpace(Request.Form["status"].FirstOrDefault()))
+                    statusFilter = Request.Form["status"].FirstOrDefault();
+                if (Request.Form.ContainsKey("state") && int.TryParse(Request.Form["state"].FirstOrDefault(), out int st) && st > 0)
+                    stateFilter = st;
 
-                var (data, recordsTotal, recordsFiltered) = await _unitOfWork.OtherPaymentServices.GetOtherPaymentsAsync(
+                var (data, recordsTotal, recordsFiltered) = await _unitOfWork.StudentPaymentService.GetPaymentsDataTableAsync(
                     skip: request.Start ?? 0,
                     pageSize: request.Length ?? 10,
                     searchTerm: request.SearchValue ?? "",
                     sortColumn: request.SortColumn,
                     sortDirection: request.SortDirection ?? "asc",
-                    termFilter: termFilter,
                     sessionFilter: sessionFilter,
+                    termFilter: termFilter,
                     classFilter: classFilter,
-                    subclassFilter: subclassFilter
+                    statusFilter: statusFilter,
+                    stateFilter: stateFilter
                 );
 
                 return new JsonResult(new
@@ -370,7 +299,134 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading term registrations DataTable");
+                _logger.LogError(ex, "Error loading student payments DataTable");
+                return Json(new { error = "Error loading data" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GetClassReportDataTable()
+        {
+            try
+            {
+                var request = ParseRequest();
+
+                int? sessionFilter = null, termFilter = null, classFilter = null,
+                     categoryFilter = null, subclassFilter = null, paymentItemFilter = null;
+
+                if (Request.Form.ContainsKey("session") && int.TryParse(Request.Form["session"].FirstOrDefault(), out int session) && session > 0)
+                    sessionFilter = session;
+                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
+                    termFilter = term;
+                if (Request.Form.ContainsKey("schoolclass") && int.TryParse(Request.Form["schoolclass"].FirstOrDefault(), out int cls) && cls > 0)
+                    classFilter = cls;
+                if (Request.Form.ContainsKey("subclass") && int.TryParse(Request.Form["subclass"].FirstOrDefault(), out int sub) && sub > 0)
+                    subclassFilter = sub;
+                if (Request.Form.ContainsKey("category") && int.TryParse(Request.Form["category"].FirstOrDefault(), out int cat) && cat > 0)
+                    categoryFilter = cat;
+                if (Request.Form.ContainsKey("paymentitem") && int.TryParse(Request.Form["paymentitem"].FirstOrDefault(), out int item) && item > 0)
+                    paymentItemFilter = item;
+
+                if (!sessionFilter.HasValue)
+                    return new JsonResult(new { draw = request.Draw, recordsFiltered = 0, recordsTotal = 0, data = new List<object>(), summary = new { } });
+
+                var result = await _unitOfWork.PaymentReportService.GetClassReportAsync(
+                    sessionFilter.Value, termFilter, classFilter, subclassFilter, categoryFilter, paymentItemFilter,
+                    request.Start ?? 0, 200, request.SearchValue ?? "",
+                    request.SortColumn, request.SortDirection ?? "asc");
+
+                return new JsonResult(new
+                {
+                    draw = request.Draw,
+                    recordsFiltered = result.RecordsFiltered,
+                    recordsTotal = result.RecordsTotal,
+                    data = result.Rows,
+                    summary = result.Summary
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading class report DataTable");
+                return Json(new { error = "Error loading data" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GetSchoolReportDataTable()
+        {
+            try
+            {
+                var request = ParseRequest();
+
+                int? sessionFilter = null, termFilter = null;
+
+                if (Request.Form.ContainsKey("session") && int.TryParse(Request.Form["session"].FirstOrDefault(), out int session) && session > 0)
+                    sessionFilter = session;
+                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
+                    termFilter = term;
+
+                if (!sessionFilter.HasValue || !termFilter.HasValue)
+                    return new JsonResult(new { draw = request.Draw, recordsFiltered = 0, recordsTotal = 0, data = new List<object>(), summary = new { } });
+
+                var result = await _unitOfWork.PaymentReportService.GetSchoolReportAsync(
+                    sessionFilter.Value, termFilter.Value,
+                    request.Start ?? 0, 200, request.SearchValue ?? "",
+                    request.SortColumn, request.SortDirection ?? "asc");
+
+                return new JsonResult(new
+                {
+                    draw = request.Draw,
+                    recordsFiltered = result.RecordsFiltered,
+                    recordsTotal = result.RecordsTotal,
+                    data = result.Rows,
+                    summary = result.Summary
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading school report DataTable");
+                return Json(new { error = "Error loading data" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GetCategoryItemReportDataTable()
+        {
+            try
+            {
+                var request = ParseRequest();
+
+                int? sessionFilter = null, termFilter = null, categoryFilter = null, classFilter = null;
+
+                if (Request.Form.ContainsKey("session") && int.TryParse(Request.Form["session"].FirstOrDefault(), out int session) && session > 0)
+                    sessionFilter = session;
+                if (Request.Form.ContainsKey("term") && int.TryParse(Request.Form["term"].FirstOrDefault(), out int term) && term > 0)
+                    termFilter = term;
+                if (Request.Form.ContainsKey("category") && int.TryParse(Request.Form["category"].FirstOrDefault(), out int cat) && cat > 0)
+                    categoryFilter = cat;
+                if (Request.Form.ContainsKey("schoolclass") && int.TryParse(Request.Form["schoolclass"].FirstOrDefault(), out int cls) && cls > 0)
+                    classFilter = cls;
+
+                if (!sessionFilter.HasValue || !termFilter.HasValue)
+                    return new JsonResult(new { draw = request.Draw, recordsFiltered = 0, recordsTotal = 0, data = new List<object>(), summary = new { } });
+
+                var result = await _unitOfWork.PaymentReportService.GetCategoryItemReportAsync(
+                    sessionFilter.Value, termFilter.Value, categoryFilter, classFilter,
+                    request.Start ?? 0, 200, request.SearchValue ?? "",
+                    request.SortColumn, request.SortDirection ?? "asc");
+
+                return new JsonResult(new
+                {
+                    draw = request.Draw,
+                    recordsFiltered = result.RecordsFiltered,
+                    recordsTotal = result.RecordsTotal,
+                    data = result.Rows,
+                    summary = result.Summary
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading category item report DataTable");
                 return Json(new { error = "Error loading data" });
             }
         }

@@ -14,8 +14,8 @@ namespace GrahamSchoolAdminSystemModels.Models
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
 
-        // Navigation: many-to-many with Employees via EmployeePosition
-        public ICollection<EmployeePosition> EmployeePositions { get; set; }
+        // Navigation: employees assigned to this position
+        public ICollection<EmployeesTable> Employees { get; set; }
 
         // Navigation: many-to-many with Identity roles via PositionRole
         public ICollection<PositionRole> PositionRoles { get; set; }

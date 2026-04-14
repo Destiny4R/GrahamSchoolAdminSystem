@@ -8,15 +8,16 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
 {
     public interface IUnitOfWork
     {
-        IFinanceServices FinanceServices { get; }
         IUsersServices UsersServices { get; }
         IStudentServices StudentServices { get; }
         ISystemActivitiesServices SystemActivities { get; }
         ILogService LogService { get; }
         ISchoolClassServices SchoolClassServices { get; }
         ITermRegistrationServices TermRegistrationServices { get; }
-        IFeesPaymentServices FeesPaymentServices { get; }
-        IPTAPaymentServices PTAPaymentServices { get; }
-        IOtherPaymentServices OtherPaymentServices { get; }
+        IPaymentCategoryService PaymentCategoryService { get; }
+        IPaymentItemService PaymentItemService { get; }
+        IPaymentSetupService PaymentSetupService { get; }
+        IStudentPaymentService StudentPaymentService { get; }
+        IPaymentReportService PaymentReportService { get; }
     }
 }

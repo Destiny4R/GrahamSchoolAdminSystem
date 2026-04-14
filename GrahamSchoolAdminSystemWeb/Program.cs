@@ -3,6 +3,7 @@ using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemAccess.ServiceRepo;
 using GrahamSchoolAdminSystemModels.Models;
 using GrahamSchoolAdminSystemWeb.Helpers;
+using GrahamSchoolAdminSystemWeb.Hubs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(Options =>
 {
     //Accont Lockout configuration
     Options.Lockout.MaxFailedAccessAttempts = 3;
-    //Options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromDays(35800);
+    Options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(2);
     // SETTING UP YOUR CUSTOM PASSWORD REQUIREMENTS
     Options.Password.RequiredLength = 0;
     Options.Password.RequiredUniqueChars = 0;
@@ -39,7 +40,6 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(Options =>
     //Options.SignIn.RequireConfirmedEmail = true;
 }).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
-builder.Services.AddScoped<IFinanceServices, FinanceServices>();
 builder.Services.AddScoped<IUsersServices,  UsersServices>();
 builder.Services.AddScoped<IStudentServices, StudentServices>();
 builder.Services.AddScoped<ILogService, LogService>();
@@ -47,14 +47,23 @@ builder.Services.AddScoped<ISystemActivitiesServices, SystemActivitiesServices>(
 builder.Services.AddScoped<ISchoolClassServices, SchoolClassServices>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<ITermRegistrationServices, TermRegistrationServices>();
-builder.Services.AddScoped<IFeesPaymentServices, FeesPaymentServices>();
-builder.Services.AddScoped<IPTAPaymentServices, PTAPaymentServices>();
-builder.Services.AddScoped<IOtherPaymentServices, OtherPaymentServices>();
+builder.Services.AddScoped<IPaymentCategoryService, PaymentCategoryService>();
+builder.Services.AddScoped<IPaymentItemService, PaymentItemService>();
+builder.Services.AddScoped<IPaymentSetupService, PaymentSetupService>();
+builder.Services.AddScoped<IStudentPaymentService, StudentPaymentService>();
+builder.Services.AddScoped<IPaymentReportService, PaymentReportService>();
+builder.Services.AddScoped<IViewsSelectionOptions, ViewsSelectionOptions>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Register view permission service for UI-level permission gating
+builder.Services.AddScoped<ViewPermissionService>();
+
 // Register the audit logging filter
 builder.Services.AddScoped<AuditLoggingFilter>();
+
+// Register SignalR for real-time notifications
+builder.Services.AddSignalR();
 
 builder.Services.ConfigureApplicationCookie(a =>
 {
@@ -90,6 +99,7 @@ app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapHub<PaymentNotificationHub>("/hubs/payment-notifications");
 
 app.Run();
 

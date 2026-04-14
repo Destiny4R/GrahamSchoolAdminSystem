@@ -87,6 +87,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                         x.Student.Surname.Contains(searchTerm) ||
                         x.Student.Firstname.Contains(searchTerm) ||
                         x.SchoolClass.Name.Contains(searchTerm) ||
+                        x.Student.ApplicationUser.UserName.Contains(searchTerm) ||
                         x.SessionYear.Name.Contains(searchTerm));
                 }
 
@@ -138,7 +139,8 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                         session = x.SessionYear.Name,
                         schoolclass = x.SchoolClass.Name,
                         createdate = x.CreatedDate,
-                        regnumber = x.Student.ApplicationUser.UserName
+                        regnumber = x.Student.ApplicationUser.UserName,
+                        hasPayment = _context.StudentPayments.Any(sp => sp.TermRegId == x.Id)
                     })
                     .ToListAsync();
 
@@ -279,6 +281,11 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (termReg == null)
                     return ServiceResponse<bool>.Failure("Term registration not found");
 
+                // Block update if payments have been recorded against this registration
+                var hasPayment = await _context.StudentPayments.AnyAsync(sp => sp.TermRegId == model.Id);
+                if (hasPayment)
+                    return ServiceResponse<bool>.Failure("Cannot edit this registration because payment records exist for it.");
+
                 // Validate school class exists
                 var schoolClass = await _context.SchoolClasses.FindAsync(model.SchoolClassId);
                 if (schoolClass == null)
@@ -328,6 +335,11 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (termReg == null)
                     return ServiceResponse<bool>.Failure("Term registration not found");
 
+                // Block delete if payments have been recorded against this registration
+                var hasPayment = await _context.StudentPayments.AnyAsync(sp => sp.TermRegId == id);
+                if (hasPayment)
+                    return ServiceResponse<bool>.Failure("Cannot delete this registration because payment records exist for it.");
+
                 _context.TermRegistrations.Remove(termReg);
                 await _context.SaveChangesAsync();
 
@@ -352,6 +364,16 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (!termRegs.Any())
                     return ServiceResponse<bool>.Failure("No term registrations found to delete");
 
+                // Block bulk delete if any selected registration has payment records
+                var idsWithPayments = await _context.StudentPayments
+                    .Where(sp => ids.Contains(sp.TermRegId))
+                    .Select(sp => sp.TermRegId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (idsWithPayments.Any())
+                    return ServiceResponse<bool>.Failure($"Cannot delete {idsWithPayments.Count} registration(s) because they have payment records. Please deselect registrations with payments and try again.");
+
                 _context.TermRegistrations.RemoveRange(termRegs);
                 await _context.SaveChangesAsync();
 
@@ -363,6 +385,11 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 _logger.LogError($"Error bulk deleting term registrations: {ex.Message}");
                 return ServiceResponse<bool>.Failure($"An error occurred: {ex.Message}");
             }
+        }
+
+        public async Task<bool> HasPaymentForTermRegistrationAsync(int termRegId)
+        {
+            return await _context.StudentPayments.AnyAsync(sp => sp.TermRegId == termRegId);
         }
 
         public async Task<List<TermRegistration>> GetOldTermRegRecordsAsync(SelectOptionsData Selectsearch)

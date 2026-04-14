@@ -2,6 +2,7 @@
 @model GrahamSchoolAdminSystemWeb.Pages.admin.academicsession.indexModel
 @{
     ViewData["Title"] = "Academic Sessions - Graham School Admin System";
+    await Permissions.InitializeAsync(User);
 }
 @section Sheets {
 <link rel="stylesheet" href="~/css/shared-components.css" />
@@ -16,9 +17,12 @@
         <p class="text-muted">Manage academic sessions (e.g., 2024/2025, 2025/2026)</p>
     </div>
     <div class="header-actions">
+        @if (Permissions.CanCreate)
+        {
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal" onclick="AcademicSessionResetForm()">
             <i class="bi bi-plus-circle me-2"></i>Add Academic Session
         </button>
+        }
     </div>
 </div>
 
@@ -69,6 +73,8 @@
 </div>
 
 <!-- Add Modal -->
+@if (Permissions.CanCreate)
+{
 <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -104,8 +110,11 @@
         </div>
     </div>
 </div>
+}
 
 <!-- Edit Modal -->
+@if (Permissions.CanEdit)
+{
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -143,9 +152,17 @@
         </div>
     </div>
 </div>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <partial name="_DatatablesScriptsFiles" />
+    <script>
+        window.userPermissions = {
+            canCreate: @Json.Serialize(Permissions.CanCreate),
+            canEdit: @Json.Serialize(Permissions.CanEdit),
+            canDelete: @Json.Serialize(Permissions.CanDelete)
+        };
+    </script>
     <script src="~/js/appmain.js"></script>
 }

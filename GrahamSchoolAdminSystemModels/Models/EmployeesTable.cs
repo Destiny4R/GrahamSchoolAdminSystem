@@ -25,7 +25,9 @@ namespace GrahamSchoolAdminSystemModels.Models
         [ForeignKey(nameof(ApplicationUserId))]
         public ApplicationUser ApplicationUser { get; set; }
 
-        // Navigation: many-to-many positions
-        public ICollection<EmployeePosition> EmployeePositions { get; set; }
+        // Single position assignment (Employee → Position → Roles → Permissions)
+        public int? PositionId { get; set; }
+        [ForeignKey(nameof(PositionId))]
+        public PositionTable Position { get; set; }
     }
 }

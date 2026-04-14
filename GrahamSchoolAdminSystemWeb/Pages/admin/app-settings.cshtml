@@ -1,0 +1,92 @@
+﻿@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.app_settingsModel
+@{
+    ViewData["Title"] = "App settings";
+}
+@section Sheets {
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link href="~/lib/sweetalert2/sweetalert2.css" rel="stylesheet" />
+}
+
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div>
+        <h2 class="page-title mb-1 text-white">
+            <i class="bi bi-briefcase-fill me-2"></i>App Settings Management
+        </h2>
+        <p class="text-white mb-0">Manage application settings</p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="h3 text-white">Settings</div>
+            </div>
+            <div class="card-body">
+                <!-- Success/Error Messages -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        @TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                <form method="post">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="appsettings.sessionId" class="form-label fw-semibold">Current Session</label>
+                            <select asp-for="appsettings.sessionId" asp-items="Model.SessionList" class="form-select" required>
+                                <option disabled selected value="0">-- Select Session --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="appsettings.term" class="form-label fw-semibold">Current Term</label>
+                            <select asp-for="appsettings.term" class="form-select" required>
+                                <option disabled selected value="0">-- Select Term --</option>
+                                <option value="1">First Term</option>
+                                <option value="2">Second Term</option>
+                                <option value="3">Third Term</option>
+                            </select>
+                        </div>
+                    </div>
+                    <hr class="my-3" />
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" asp-for="appsettings.feespart">
+                            <label class="form-check-label" asp-for="appsettings.feespart">Fees Part Payment</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" asp-for="appsettings.ptapart" type="checkbox" role="switch" >
+                            <label class="form-check-label" asp-for="appsettings.ptapart">PTA Part Payment</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" asp-for="appsettings.PaymentEvidence">
+                                        <label class="form-check-label" asp-for="appsettings.PaymentEvidence">Require Payment Evidence</label>
+                        </div>
+                    </div>
+                    <div class="">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-save-fill me-2"></i> Save settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

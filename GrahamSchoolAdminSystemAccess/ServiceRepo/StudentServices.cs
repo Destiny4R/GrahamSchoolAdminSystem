@@ -1,7 +1,9 @@
+using ClosedXML.Excel;
 using GrahamSchoolAdminSystemAccess.Data;
 using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemModels.Models;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -185,6 +187,185 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 return (false, "Error updating student");
             }
         }
+
+        public async Task<(bool Succeeded, string Message, List<StudentImportResult> Results)> ImportStudentsFromExcelAsync(IFormFile excelFile)
+        {
+            var results = new List<StudentImportResult>();
+
+            if (excelFile == null || excelFile.Length == 0)
+                return (false, "No file uploaded", results);
+
+            try
+            {
+                using var stream = new MemoryStream();
+                await excelFile.CopyToAsync(stream);
+                stream.Position = 0;
+
+                using var workbook = new XLWorkbook(stream);
+                var worksheet = workbook.Worksheet(1);
+
+                // Get the range of data (skip header row)
+                var firstRowUsed = worksheet.FirstRowUsed().RowNumber() + 1;
+                var lastRowUsed = worksheet.LastRowUsed().RowNumber();
+
+                for (int row = firstRowUsed; row <= lastRowUsed; row++)
+                {
+                    using var transaction = await _context.Database.BeginTransactionAsync();
+
+                    try
+                    {
+                        // Skip empty rows
+                        if (worksheet.Cell(row, 1).IsEmpty())
+                            continue;
+
+                        var email = worksheet.Cell(row, 1).GetString().Trim();
+                        var surname = worksheet.Cell(row, 2).GetString().Trim();
+                        var firstname = worksheet.Cell(row, 3).GetString().Trim();
+                        var othername = worksheet.Cell(row, 4).GetString().Trim();
+                        var genderValue = worksheet.Cell(row, 5).GetString().Trim();
+                        var passportPath = worksheet.Cell(row, 6).GetString().Trim();
+
+                        // Validate required fields
+                        if (string.IsNullOrWhiteSpace(email))
+                        {
+                            results.Add(new StudentImportResult
+                            {
+                                RowNumber = row,
+                                Succeeded = false,
+                                Message = "Email is required",
+                                Email = ""
+                            });
+                            await transaction.RollbackAsync();
+                            continue;
+                        }
+
+                        if (string.IsNullOrWhiteSpace(surname) || string.IsNullOrWhiteSpace(firstname))
+                        {
+                            results.Add(new StudentImportResult
+                            {
+                                RowNumber = row,
+                                Succeeded = false,
+                                Message = "Surname and Firstname are required",
+                                Email = email
+                            });
+                            await transaction.RollbackAsync();
+                            continue;
+                        }
+
+                        var genderId = SD.ParseGenderId(genderValue);
+                        if (!genderId.HasValue || genderId == 0)
+                        {
+                            results.Add(new StudentImportResult
+                            {
+                                RowNumber = row,
+                                Succeeded = false,
+                                Message = "Invalid gender value. Use 'Male' or 'Female'",
+                                Email = email
+                            });
+                            await transaction.RollbackAsync();
+                            continue;
+                        }
+
+                        // Check if user already exists
+                        var existingUser = await _userManager.FindByEmailAsync(email);
+                        if (existingUser != null)
+                        {
+                            results.Add(new StudentImportResult
+                            {
+                                RowNumber = row,
+                                Succeeded = false,
+                                Message = "A user account with this email already exists",
+                                Email = email
+                            });
+                            await transaction.RollbackAsync();
+                            continue;
+                        }
+
+                        // Create the ApplicationUser (login account)
+                        var applicationUser = new ApplicationUser
+                        {
+                            UserName = email,
+                            Email = email,
+                            EmailConfirmed = true
+                        };
+
+                        var identityResult = await _userManager.CreateAsync(applicationUser, "12345678");
+
+                        if (!identityResult.Succeeded)
+                        {
+                            var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+                            _logger.LogWarning("Failed to create user account for {Email}: {Errors}", email, errors);
+
+                            results.Add(new StudentImportResult
+                            {
+                                RowNumber = row,
+                                Succeeded = false,
+                                Message = $"Failed to create user account: {errors}",
+                                Email = email
+                            });
+
+                            await transaction.RollbackAsync();
+                            continue;
+                        }
+
+                        // Create student record
+                        var student = new StudentTable
+                        {
+                            Surname = surname,
+                            Firstname = firstname,
+                            Othername = othername ?? string.Empty,
+                            Gender = (GetEnums.Gender)genderId.Value,
+                            PaspportPath = passportPath ?? string.Empty,
+                            ApplicationUserId = applicationUser.Id,
+                            CreatedDate = DateTime.UtcNow
+                        };
+
+                        _context.Students.Add(student);
+                        await _context.SaveChangesAsync();
+
+                        // Commit transaction
+                        await transaction.CommitAsync();
+
+                        results.Add(new StudentImportResult
+                        {
+                            RowNumber = row,
+                            Succeeded = true,
+                            Message = "Student created successfully",
+                            Email = email
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+
+                        results.Add(new StudentImportResult
+                        {
+                            RowNumber = row,
+                            Succeeded = false,
+                            Message = $"Error processing row: {ex.Message}",
+                            Email = worksheet.Cell(row, 1).GetString()
+                        });
+
+                        _logger.LogError(ex, "Error importing student at row {Row}", row);
+                    }
+                }
+
+                var successCount = results.Count(r => r.Succeeded);
+                var failureCount = results.Count(r => !r.Succeeded);
+
+                return (true,
+                        $"Import completed: {successCount} successful, {failureCount} failed",
+                        results);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error importing students from Excel");
+                return (false, $"Error reading Excel file: {ex.Message}", results);
+            }
+        }
+
+
+
 
         public async Task<(bool Succeeded, string Message)> DeleteStudentAsync(int studentId)
         {

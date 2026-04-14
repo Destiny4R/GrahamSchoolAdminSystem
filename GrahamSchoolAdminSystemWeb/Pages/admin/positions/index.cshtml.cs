@@ -1,6 +1,9 @@
+using GrahamSchoolAdminSystemAccess;
 using GrahamSchoolAdminSystemAccess.Data;
 using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemModels.Models;
+using GrahamSchoolAdminSystemModels.ViewModels;
+using GrahamSchoolAdminSystemWeb.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,23 +13,27 @@ using Microsoft.EntityFrameworkCore;
 namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
 {
     [Authorize]
+    [RequireRole(SD.Roles.ADMIN)]
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogService _logService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IUsersServices _usersServices;
 
         public IndexModel(
             ApplicationDbContext context,
             ILogService logService,
             UserManager<ApplicationUser> userManager,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IUsersServices usersServices)
         {
             _context = context;
             _logService = logService;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+            _usersServices = usersServices;
         }
 
         [BindProperty]
@@ -40,7 +47,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
             {
                 // Load all positions with employee count
                 var positions = await _context.PositionTables
-                    .Include(p => p.EmployeePositions)
+                    .Include(p => p.Employees)
                     .OrderBy(p => p.Name)
                     .ToListAsync();
 
@@ -49,7 +56,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
                     Id = p.Id,
                     Name = p.Name,
                     Description = p.Description,
-                    EmployeeCount = p.EmployeePositions?.Count ?? 0,
+                    EmployeeCount = p.Employees?.Count ?? 0,
                     CreatedDate = p.CreatedDate,
                     UpdatedDate = p.UpdatedDate
                 }).ToList();
@@ -81,6 +88,13 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
                     if (existingPosition == null)
                     {
                         TempData["Error"] = "Position not found";
+                        return RedirectToPage();
+                    }
+
+                    // Protect Principal position from modification
+                    if (existingPosition.Name == SD.Positions.PRINCIPAL)
+                    {
+                        TempData["Error"] = SD.Messages.ERROR_PRINCIPAL_PROTECTED;
                         return RedirectToPage();
                     }
 
@@ -126,7 +140,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
             try
             {
                 var position = await _context.PositionTables
-                    .Include(p => p.EmployeePositions)
+                    .Include(p => p.Employees)
                     .FirstOrDefaultAsync(p => p.Id == id);
 
                 if (position == null)
@@ -134,13 +148,19 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
                     return new JsonResult(new { success = false, message = "Position not found" });
                 }
 
+                // Protect Principal position from deletion
+                if (position.Name == SD.Positions.PRINCIPAL)
+                {
+                    return new JsonResult(new { success = false, message = SD.Messages.ERROR_PRINCIPAL_PROTECTED });
+                }
+
                 // Check if position is assigned to any employees
-                if (position.EmployeePositions != null && position.EmployeePositions.Any())
+                if (position.Employees != null && position.Employees.Any())
                 {
                     return new JsonResult(new
                     {
                         success = false,
-                        message = $"Cannot delete position '{position.Name}' because it is assigned to {position.EmployeePositions.Count} employee(s)"
+                        message = $"Cannot delete position '{position.Name}' because it is assigned to {position.Employees.Count} employee(s)"
                     });
                 }
 
@@ -192,6 +212,106 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
             {
                 await LogErrorAsync("OnGetEditAsync", ex.Message);
                 return new JsonResult(new { success = false, message = "Error loading position data" });
+            }
+        }
+
+        public async Task<IActionResult> OnGetRoleAssignmentAsync(int id)
+        {
+            try
+            {
+                var viewModel = await _usersServices.GetRoleAssignmentViewAsync(id);
+                if (viewModel == null)
+                {
+                    return new JsonResult(new { success = false, message = "Position not found" });
+                }
+
+                return new JsonResult(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        positionId = viewModel.PositionId,
+                        positionName = viewModel.PositionName,
+                        allPermissions = viewModel.AllPermissions.Select(p => new
+                        {
+                            id = p.Id,
+                            name = p.Name
+                        }),
+                        availableRoles = viewModel.AvailableRoles.Select(r => new
+                        {
+                            roleId = r.RoleId,
+                            roleName = r.RoleName,
+                            isAssigned = r.IsAssigned,
+                            permissions = r.Permissions,
+                            permissionIds = r.PermissionIds
+                        })
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                await LogErrorAsync("OnGetRoleAssignmentAsync", ex.Message);
+                return new JsonResult(new { success = false, message = "Error loading role assignment data" });
+            }
+        }
+
+        public async Task<IActionResult> OnPostAssignRolesAsync([FromBody] AssignRolesRequest request)
+        {
+            try
+            {
+                if (request == null || request.PositionId <= 0)
+                {
+                    return new JsonResult(new { success = false, message = "Invalid request data" });
+                }
+
+                // Protect Principal position — roles and permissions cannot be modified
+                var position = await _context.PositionTables.FirstOrDefaultAsync(p => p.Id == request.PositionId);
+                if (position != null && position.Name == SD.Positions.PRINCIPAL)
+                {
+                    return new JsonResult(new { success = false, message = SD.Messages.ERROR_PRINCIPAL_PROTECTED });
+                }
+
+                // 1. Update role-permission assignments for each role
+                if (request.RolePermissions != null)
+                {
+                    foreach (var rp in request.RolePermissions)
+                    {
+                        var result = await _usersServices.UpdateRolePermissionsAsync(rp.RoleId, rp.PermissionIds ?? new List<int>());
+                        if (!result.Succeeded)
+                        {
+                            return new JsonResult(new { success = false, message = result.Message });
+                        }
+                    }
+                }
+
+                // 2. Update position-role assignments
+                var roleIds = request.SelectedRoleIds ?? new List<string>();
+
+                if (roleIds.Count == 0)
+                {
+                    var existingRoles = await _context.PositionRoles
+                        .Where(x => x.PositionId == request.PositionId)
+                        .ToListAsync();
+                    _context.PositionRoles.RemoveRange(existingRoles);
+                    await _context.SaveChangesAsync();
+
+                    await LogUserActionAsync("Assign Roles & Permissions", $"Removed all roles from position ID: {request.PositionId}");
+                    return new JsonResult(new { success = true, message = "Roles and permissions updated successfully" });
+                }
+
+                var assignResult = await _usersServices.AssignRolesToPositionAsync(request.PositionId, roleIds);
+
+                if (assignResult.Succeeded)
+                {
+                    await LogUserActionAsync("Assign Roles & Permissions", $"Updated roles and permissions for position ID: {request.PositionId}");
+                }
+
+                return new JsonResult(new { success = assignResult.Succeeded, message = "Roles and permissions updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                await LogErrorAsync("OnPostAssignRolesAsync", ex.Message);
+                return new JsonResult(new { success = false, message = "An error occurred while saving" });
             }
         }
 
@@ -247,5 +367,18 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.positions
         public int EmployeeCount { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
+    }
+
+    public class AssignRolesRequest
+    {
+        public int PositionId { get; set; }
+        public List<string> SelectedRoleIds { get; set; } = new List<string>();
+        public List<RolePermissionUpdate> RolePermissions { get; set; } = new List<RolePermissionUpdate>();
+    }
+
+    public class RolePermissionUpdate
+    {
+        public string RoleId { get; set; }
+        public List<int> PermissionIds { get; set; } = new List<int>();
     }
 }

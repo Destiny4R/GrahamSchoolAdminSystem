@@ -1,5 +1,7 @@
+using GrahamSchoolAdminSystemAccess;
 using GrahamSchoolAdminSystemAccess.Data;
 using GrahamSchoolAdminSystemModels.Models;
+using GrahamSchoolAdminSystemWeb.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace GrahamSchoolAdminSystemWeb.Pages.admin.roles
 {
     [Authorize]
+    [RequireRole(SD.Roles.ADMIN)]
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;

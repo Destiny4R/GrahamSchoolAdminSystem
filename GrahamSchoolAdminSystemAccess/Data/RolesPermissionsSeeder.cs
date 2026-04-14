@@ -26,40 +26,28 @@ namespace GrahamSchoolAdminSystemAccess.Data
 
         private static async Task SeedPermissionsAsync(ApplicationDbContext context)
         {
-            if (await context.Permissions.AnyAsync())
+            var permissionsToSeed = new List<(string Name, string Description)>
             {
-                return; // Permissions already seeded
-            }
-
-            var permissions = new List<Permission>
-            {
-                new Permission
-                {
-                    Name = "Create",
-                    Description = "Permission to create new records",
-                    CreatedDate = DateTime.UtcNow
-                },
-                new Permission
-                {
-                    Name = "Edit",
-                    Description = "Permission to edit existing records",
-                    CreatedDate = DateTime.UtcNow
-                },
-                new Permission
-                {
-                    Name = "Delete",
-                    Description = "Permission to delete records",
-                    CreatedDate = DateTime.UtcNow
-                },
-                new Permission
-                {
-                    Name = "View",
-                    Description = "Permission to view records",
-                    CreatedDate = DateTime.UtcNow
-                }
+                ("Create", "Permission to create new records"),
+                ("Edit", "Permission to edit existing records"),
+                ("Delete", "Permission to delete records"),
+                ("View", "Permission to view records"),
+                ("Report", "Permission to generate and view reports")
             };
 
-            await context.Permissions.AddRangeAsync(permissions);
+            foreach (var (name, description) in permissionsToSeed)
+            {
+                if (!await context.Permissions.AnyAsync(p => p.Name == name))
+                {
+                    context.Permissions.Add(new Permission
+                    {
+                        Name = name,
+                        Description = description,
+                        CreatedDate = DateTime.UtcNow
+                    });
+                }
+            }
+
             await context.SaveChangesAsync();
         }
 
@@ -79,10 +67,9 @@ namespace GrahamSchoolAdminSystemAccess.Data
 
         private static async Task SeedRolePermissionsAsync(ApplicationDbContext context)
         {
+            // Only seed if no role-permission mappings exist yet (first-time setup only)
             if (await context.RolePermissions.AnyAsync())
-            {
-                return; // Role permissions already seeded
-            }
+                return;
 
             // Get roles and permissions
             var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
@@ -93,6 +80,7 @@ namespace GrahamSchoolAdminSystemAccess.Data
             var editPermission = await context.Permissions.FirstOrDefaultAsync(p => p.Name == "Edit");
             var deletePermission = await context.Permissions.FirstOrDefaultAsync(p => p.Name == "Delete");
             var viewPermission = await context.Permissions.FirstOrDefaultAsync(p => p.Name == "View");
+            var reportPermission = await context.Permissions.FirstOrDefaultAsync(p => p.Name == "Report");
 
             if (adminRole == null || accountantRole == null || cashierRole == null ||
                 createPermission == null || editPermission == null || deletePermission == null || viewPermission == null)
@@ -100,24 +88,43 @@ namespace GrahamSchoolAdminSystemAccess.Data
                 throw new InvalidOperationException("Required roles or permissions not found in database");
             }
 
-            var rolePermissions = new List<RolePermission>
+            var mappingsToSeed = new List<(string RoleId, int PermissionId)>
             {
-                // Admin - Full permissions (Create, Edit, Delete, View)
-                new RolePermission { RoleId = adminRole.Id, PermissionId = createPermission.Id, AssignedDate = DateTime.UtcNow },
-                new RolePermission { RoleId = adminRole.Id, PermissionId = editPermission.Id, AssignedDate = DateTime.UtcNow },
-                new RolePermission { RoleId = adminRole.Id, PermissionId = deletePermission.Id, AssignedDate = DateTime.UtcNow },
-                new RolePermission { RoleId = adminRole.Id, PermissionId = viewPermission.Id, AssignedDate = DateTime.UtcNow },
+                // Admin - Full permissions (Create, Edit, Delete, View, Report)
+                (adminRole.Id, createPermission.Id),
+                (adminRole.Id, editPermission.Id),
+                (adminRole.Id, deletePermission.Id),
+                (adminRole.Id, viewPermission.Id),
 
-                // Accountant - Create, Edit, View (no Delete)
-                new RolePermission { RoleId = accountantRole.Id, PermissionId = createPermission.Id, AssignedDate = DateTime.UtcNow },
-                new RolePermission { RoleId = accountantRole.Id, PermissionId = editPermission.Id, AssignedDate = DateTime.UtcNow },
-                new RolePermission { RoleId = accountantRole.Id, PermissionId = viewPermission.Id, AssignedDate = DateTime.UtcNow },
+                // Accountant - Create, Edit, View, Report (no Delete)
+                (accountantRole.Id, createPermission.Id),
+                (accountantRole.Id, editPermission.Id),
+                (accountantRole.Id, viewPermission.Id),
 
                 // Cashier - View only
-                new RolePermission { RoleId = cashierRole.Id, PermissionId = viewPermission.Id, AssignedDate = DateTime.UtcNow }
+                (cashierRole.Id, viewPermission.Id)
             };
 
-            await context.RolePermissions.AddRangeAsync(rolePermissions);
+            // Add Report permission mappings if Report permission exists
+            if (reportPermission != null)
+            {
+                mappingsToSeed.Add((adminRole.Id, reportPermission.Id));
+                mappingsToSeed.Add((accountantRole.Id, reportPermission.Id));
+            }
+
+            foreach (var (roleId, permissionId) in mappingsToSeed)
+            {
+                if (!await context.RolePermissions.AnyAsync(rp => rp.RoleId == roleId && rp.PermissionId == permissionId))
+                {
+                    context.RolePermissions.Add(new RolePermission
+                    {
+                        RoleId = roleId,
+                        PermissionId = permissionId,
+                        AssignedDate = DateTime.UtcNow
+                    });
+                }
+            }
+
             await context.SaveChangesAsync();
         }
     }

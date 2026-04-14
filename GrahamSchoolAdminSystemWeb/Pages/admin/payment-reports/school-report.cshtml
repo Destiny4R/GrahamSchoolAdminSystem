@@ -1,0 +1,113 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.payment_reports.school_reportModel
+@inject GrahamSchoolAdminSystemWeb.Helpers.ViewPermissionService Permissions
+@{
+    ViewData["Title"] = "School Payment Report";
+    await Permissions.InitializeAsync(User);
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DataTablesSheetFiles" />
+}
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-bar-chart-line"></i> School-Wide Payment Report
+        </h1>
+        <p class="text-white">Aggregated payment performance across all classes</p>
+    </div>
+</div>
+
+<div class="page-content">
+    <!-- Filters -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label for="schoolRptSession">Session:</label>
+            <select id="schoolRptSession" class="form-select">
+                <option value="">-- Select Session --</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="schoolRptTerm">Term:</label>
+            <select id="schoolRptTerm" class="form-select">
+                <option value="">-- Select Term --</option>
+                <option value="1">First Term</option>
+                <option value="2">Second Term</option>
+                <option value="3">Third Term</option>
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button id="btnLoadSchoolReport" class="btn btn-primary">
+                <i class="bi bi-funnel"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div id="schoolReportSummary" class="row g-3 mb-3" style="display:none;">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Total Students</h6>
+                    <h3 id="schoolSumStudents" class="text-primary">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Students Paid</h6>
+                    <h3 id="schoolSumPaid" class="text-success">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Total Expected</h6>
+                    <h3 id="schoolSumExpected" class="text-info">₦0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">Total Outstanding</h6>
+                    <h3 id="schoolSumOutstanding" class="text-danger">₦0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div id="categoryBreakdownContainer" class="mb-3" style="display:none;">
+        <h5><i class="bi bi-pie-chart me-2"></i>Revenue by Category</h5>
+        <div id="categoryBreakdownCards" class="row g-2"></div>
+    </div>
+
+    <!-- DataTable -->
+    <div class="datatable-container mt-3">
+        <table id="schoolReportTable" class="table table-hover" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Payment Item</th>
+                    <th>Total Students</th>
+                    <th>Students Paid</th>
+                    <th>Expected (₦)</th>
+                    <th>Collected (₦)</th>
+                    <th>Outstanding (₦)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_DatatablesScriptsFiles" />
+    <script src="~/js/appmain.js"></script>
+}

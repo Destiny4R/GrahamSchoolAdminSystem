@@ -179,12 +179,11 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (schoolClass == null)
                     return ServiceResponse<bool>.Failure("School class not found");
 
-                // Check if class has related data (students registered in this class, fees setup, etc.)
+                // Check if class has related data (students registered in this class)
                 var hasStudents = await _context.TermRegistrations.AnyAsync(x => x.SchoolClassId == id);
-                var hasFees = await _context.TermlyFeesSetups.AnyAsync(x => x.SchoolClassId == id);
 
-                if (hasStudents || hasFees)
-                    return ServiceResponse<bool>.Failure("Cannot delete class with related records (student registrations or fees setup)");
+                if (hasStudents)
+                    return ServiceResponse<bool>.Failure("Cannot delete class with related records (student registrations)");
 
                 _context.SchoolClasses.Remove(schoolClass);
                 await _context.SaveChangesAsync();

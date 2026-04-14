@@ -1,0 +1,329 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.payment_setup.indexModel
+@{
+    ViewData["Title"] = "Payment Setup";
+    await Permissions.InitializeAsync(User);
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <partial name="_DatatablesSheetFiles" />
+}
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-gear-wide-connected"></i> Payment Setup
+        </h1>
+        <p class="text-muted">Configure payment amounts per item, session, term and class</p>
+    </div>
+    <div class="header-actions">
+        @if (Permissions.CanCreate)
+        {
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#setupModal" onclick="PaymentSetup.resetForm()">
+            <i class="bi bi-plus-circle me-2"></i>Add Payment Setup
+        </button>
+        }
+    </div>
+</div>
+
+<div class="page-content">
+    @if (!string.IsNullOrEmpty(TempData["Success"]?.ToString()))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="search-filter-area">
+        <div class="search-group">
+            <label for="setupSearchInput">Search:</label>
+            <input type="text" id="setupSearchInput" class="form-control" placeholder="Search...">
+        </div>
+        <div class="search-group">
+            <label for="filterSession">Session:</label>
+            <select id="filterSession" class="form-select">
+                <option value="">All Sessions</option>
+            </select>
+        </div>
+        <div class="search-group">
+            <label for="filterTerm">Term:</label>
+            <select id="filterTerm" class="form-select">
+                <option value="">All Terms</option>
+                <option value="1">First Term</option>
+                <option value="2">Second Term</option>
+                <option value="3">Third Term</option>
+            </select>
+        </div>
+        <div class="search-group">
+            <label for="filterClass">Class:</label>
+            <select id="filterClass" class="form-select">
+                <option value="">All Classes</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="datatable-container">
+        <table id="paymentSetupsTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th class="col-1">#</th>
+                    <th>Payment Item</th>
+                    <th>Category</th>
+                    <th>Session</th>
+                    <th>Term</th>
+                    <th>Class</th>
+                    <th>Amount</th>
+                    <th class="col-1">Status</th>
+                    <th class="col-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Modal -->
+@if (Permissions.CanCreate)
+{
+<div class="modal fade" id="setupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-gear-wide-connected me-2"></i>Add Payment Setup
+                    </h5>
+                    <small>Configure a payment amount for an item</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-tag me-1"></i>Category <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="setupCategoryId" required>
+                                    <option value="">Select Category</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.PaymentItemId">
+                                    <i class="bi bi-receipt me-1"></i>Payment Item <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.PaymentItemId" id="setupPaymentItemId" required>
+                                    <option value="">Select Item</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.PaymentItemId"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.SessionId">
+                                    <i class="bi bi-calendar3 me-1"></i>Session <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.SessionId" id="setupSessionId" required>
+                                    <option value="">Select Session</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.SessionId"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.Term">
+                                    <i class="bi bi-calendar-event me-1"></i>Term <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.Term" id="setupTermId" required>
+                                    <option value="">Select Term</option>
+                                    <option value="1">First Term</option>
+                                    <option value="2">Second Term</option>
+                                    <option value="3">Third Term</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.Term"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.ClassId">
+                                    <i class="bi bi-building me-1"></i>Class <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.ClassId" id="setupClassId" required>
+                                    <option value="">Select Class</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.ClassId"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.Amount">
+                                    <i class="bi bi-currency-exchange me-1"></i>Amount <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" asp-for="SetupModel.Amount"
+                                       placeholder="0.00" required min="0.01" step="0.01">
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.Amount"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Edit Modal -->
+@if (Permissions.CanEdit)
+{
+<div class="modal fade" id="setupEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-gear-wide-connected me-2"></i>Edit Payment Setup
+                    </h5>
+                    <small>Update payment setup configuration</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                <div class="modal-body">
+                    <input type="hidden" asp-for="SetupModel.Id" id="editSetupId" />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-tag me-1"></i>Category <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="editSetupCategoryId" required>
+                                    <option value="">Select Category</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.PaymentItemId">
+                                    <i class="bi bi-receipt me-1"></i>Payment Item <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.PaymentItemId" id="editSetupPaymentItemId" required>
+                                    <option value="">Select Item</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.PaymentItemId"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.SessionId">
+                                    <i class="bi bi-calendar3 me-1"></i>Session <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.SessionId" id="editSetupSessionId" required>
+                                    <option value="">Select Session</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.SessionId"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.Term">
+                                    <i class="bi bi-calendar-event me-1"></i>Term <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.Term" id="editSetupTermId" required>
+                                    <option value="">Select Term</option>
+                                    <option value="1">First Term</option>
+                                    <option value="2">Second Term</option>
+                                    <option value="3">Third Term</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.Term"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.ClassId">
+                                    <i class="bi bi-building me-1"></i>Class <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" asp-for="SetupModel.ClassId" id="editSetupClassId" required>
+                                    <option value="">Select Class</option>
+                                </select>
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.ClassId"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label" asp-for="SetupModel.Amount">
+                                    <i class="bi bi-currency-exchange me-1"></i>Amount <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" asp-for="SetupModel.Amount" id="editSetupAmount"
+                                       placeholder="0.00" required min="0.01" step="0.01">
+                                <span class="invalid-feedback" asp-validation-for="SetupModel.Amount"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3 d-flex align-items-end" style="height:100%">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" asp-for="SetupModel.IsActive" id="editSetupIsActive" checked>
+                                    <label class="form-check-label" for="editSetupIsActive">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <partial name="_DatatablesScriptsFiles" />
+    <script>
+        window.userPermissions = {
+            canCreate: @Json.Serialize(Permissions.CanCreate),
+            canEdit: @Json.Serialize(Permissions.CanEdit),
+            canDelete: @Json.Serialize(Permissions.CanDelete)
+        };
+    </script>
+    <script src="~/js/appmain.js"></script>
+}

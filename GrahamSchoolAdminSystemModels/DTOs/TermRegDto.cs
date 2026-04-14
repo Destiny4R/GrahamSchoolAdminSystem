@@ -15,5 +15,6 @@ namespace GrahamSchoolAdminSystemModels.DTOs
         public string schoolclass { get; set; }
         public string regnumber { get; set; }
         public DateTime createdate { get; set; }
+        public bool hasPayment { get; set; }
     }
 }

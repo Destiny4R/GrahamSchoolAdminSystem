@@ -3,12 +3,15 @@ using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemModels.DTOs;
 using GrahamSchoolAdminSystemModels.Models;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,14 +23,60 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
         private readonly ILogger<UsersServices> _logger;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogService _logService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UsersServices(ApplicationDbContext context, ILogger<UsersServices> logger, RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
+        public UsersServices(ApplicationDbContext context, ILogger<UsersServices> logger, RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, ILogService logService, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _logger = logger;
             _roleManager = roleManager;
             _userManager = userManager;
+            _logService = logService;
+            _httpContextAccessor = httpContextAccessor;
         }
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Get current user ID from HttpContext
+        /// </summary>
+        private string GetCurrentUserId()
+        {
+            return _httpContextAccessor?.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "System";
+        }
+
+        /// <summary>
+        /// Get current user name from HttpContext
+        /// </summary>
+        private string GetCurrentUserName()
+        {
+            return _httpContextAccessor?.HttpContext?.User?.Identity?.Name ?? "System";
+        }
+
+        /// <summary>
+        /// Get client IP address from HttpContext
+        /// </summary>
+        private string GetClientIpAddress()
+        {
+            try
+            {
+                var httpContext = _httpContextAccessor?.HttpContext;
+                if (httpContext == null)
+                    return "Unknown";
+
+                if (httpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
+                    return httpContext.Request.Headers["X-Forwarded-For"].ToString().Split(',')[0].Trim();
+
+                return httpContext.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        #endregion
 
         #region Position Management
 
@@ -71,6 +120,11 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (position == null)
                     return (false, SD.Messages.ERROR_POSITION_NOT_FOUND);
 
+                // Protect Principal position from modification
+                if (position.Name == SD.Positions.PRINCIPAL)
+                    return (false, SD.Messages.ERROR_PRINCIPAL_PROTECTED);
+                    return (false, SD.Messages.ERROR_POSITION_NOT_FOUND);
+
                 var name = model.Name?.Trim();
                 if (await _context.PositionTables.AnyAsync(x => x.Name == name && x.Id != model.Id))
                     return (false, SD.Messages.ERROR_POSITION_EXISTS);
@@ -96,8 +150,13 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (positionId <= 0)
                     return (false, SD.Messages.ERROR_INVALID_POSITION);
 
-                // Check if position is assigned to employees
-                if (await _context.EmployeePositions.AnyAsync(x => x.PositionId == positionId))
+                // Protect Principal position from deletion
+                var positionToCheck = await _context.PositionTables.FirstOrDefaultAsync(x => x.Id == positionId);
+                if (positionToCheck != null && positionToCheck.Name == SD.Positions.PRINCIPAL)
+                    return (false, SD.Messages.ERROR_PRINCIPAL_PROTECTED);
+
+                // Check if position is assigned to any employees
+                if (await _context.Employees.AnyAsync(x => x.PositionId == positionId))
                     return (false, SD.Messages.ERROR_POSITION_IN_USE);
 
                 var position = await _context.PositionTables.FirstOrDefaultAsync(x => x.Id == positionId);
@@ -123,7 +182,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 var position = await _context.PositionTables
                     .Include(p => p.PositionRoles)
                     .ThenInclude(pr => pr.Role)
-                    .Include(p => p.EmployeePositions)
+                    .Include(p => p.Employees)
                     .FirstOrDefaultAsync(x => x.Id == positionId);
 
                 if (position == null)
@@ -145,7 +204,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 var query = _context.PositionTables
                     .Include(p => p.PositionRoles)
                     .ThenInclude(pr => pr.Role)
-                    .Include(p => p.EmployeePositions)
+                    .Include(p => p.Employees)
                     .AsNoTracking()
                     .AsQueryable();
 
@@ -191,6 +250,10 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (position == null)
                     return (false, SD.Messages.ERROR_POSITION_NOT_FOUND);
 
+                // Protect Principal position — role assignments cannot be changed
+                if (position.Name == SD.Positions.PRINCIPAL)
+                    return (false, SD.Messages.ERROR_PRINCIPAL_PROTECTED);
+
                 // Remove existing assignments
                 var existingRoles = await _context.PositionRoles.Where(x => x.PositionId == positionId).ToListAsync();
                 _context.PositionRoles.RemoveRange(existingRoles);
@@ -227,7 +290,16 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (position == null)
                     return null;
 
-                var allRoles = await _roleManager.Roles.ToListAsync();
+                var allRoles = await _roleManager.Roles
+                    .Include(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+                    .ToListAsync();
+
+                var allPermissions = await _context.Permissions
+                    .OrderBy(p => p.Name)
+                    .Select(p => new PermissionViewModel { Id = p.Id, Name = p.Name })
+                    .ToListAsync();
+
                 var assignedRoleIds = position.PositionRoles.Select(pr => pr.RoleId).ToList();
 
                 var availableRoles = allRoles.Select(r => new RoleCheckboxViewModel
@@ -235,7 +307,8 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     RoleId = r.Id,
                     RoleName = r.Name,
                     IsAssigned = assignedRoleIds.Contains(r.Id),
-                    Permissions = SD.GetRolePermissions().ContainsKey(r.Name) ? SD.GetRolePermissions()[r.Name] : new List<string>()
+                    Permissions = r.RolePermissions.Select(rp => rp.Permission.Name).ToList(),
+                    PermissionIds = r.RolePermissions.Select(rp => rp.PermissionId).ToList()
                 }).ToList();
 
                 return new AssignRoleViewModel
@@ -244,7 +317,8 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     PositionName = position.Name,
                     AvailableRoles = availableRoles,
                     AssignedRoles = allRoles.Where(r => assignedRoleIds.Contains(r.Id)).Select(r => r.Name).ToList(),
-                    SelectedRoleIds = assignedRoleIds
+                    SelectedRoleIds = assignedRoleIds,
+                    AllPermissions = allPermissions
                 };
             }
             catch (Exception ex)
@@ -254,12 +328,30 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
             }
         }
 
+        public IEnumerable<SelectListItem> PositionsList()
+        {
+            var positions = _context.PositionTables
+                    .AsNoTracking()
+                    .OrderBy(x => x.Name)
+                    .Select(x => new SelectListItem
+                    {
+                        Value = x.Id.ToString(),
+                        Text = x.Name
+                    }).ToList();
+            return positions;
+        }
+
         public async Task<(bool Succeeded, string Message)> RemoveRoleFromPositionAsync(int positionId, string roleId)
         {
             try
             {
                 if (positionId <= 0 || string.IsNullOrWhiteSpace(roleId))
                     return (false, SD.Messages.ERROR_INVALID_POSITION);
+
+                // Protect Principal position — roles cannot be removed
+                var position = await _context.PositionTables.FirstOrDefaultAsync(x => x.Id == positionId);
+                if (position != null && position.Name == SD.Positions.PRINCIPAL)
+                    return (false, SD.Messages.ERROR_PRINCIPAL_PROTECTED);
 
                 var positionRole = await _context.PositionRoles
                     .FirstOrDefaultAsync(x => x.PositionId == positionId && x.RoleId == roleId);
@@ -281,20 +373,71 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
 
         #endregion
 
+        #region Role-Permission Management
+
+        public async Task<(bool Succeeded, string Message)> UpdateRolePermissionsAsync(string roleId, List<int> permissionIds)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(roleId))
+                    return (false, "Invalid role selected");
+
+                var role = await _roleManager.FindByIdAsync(roleId);
+                if (role == null)
+                    return (false, "Role not found");
+
+                // Remove existing permissions for this role
+                var existingPermissions = await _context.RolePermissions
+                    .Where(rp => rp.RoleId == roleId)
+                    .ToListAsync();
+                _context.RolePermissions.RemoveRange(existingPermissions);
+
+                // Add new permissions
+                if (permissionIds != null && permissionIds.Count > 0)
+                {
+                    foreach (var permissionId in permissionIds)
+                    {
+                        var permissionExists = await _context.Permissions.AnyAsync(p => p.Id == permissionId);
+                        if (permissionExists)
+                        {
+                            _context.RolePermissions.Add(new RolePermission
+                            {
+                                RoleId = roleId,
+                                PermissionId = permissionId,
+                                AssignedDate = DateTime.UtcNow
+                            });
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                return (true, $"Permissions updated for role '{role.Name}'");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating role permissions");
+                return (false, SD.Messages.ERROR_UNEXPECTED);
+            }
+        }
+
+        #endregion
+
         #region Get Available Roles
 
         public async Task<List<RolePermissionDto>> GetAvailableRolesWithPermissionsAsync()
         {
             try
             {
-                var roles = await _roleManager.Roles.ToListAsync();
-                var rolePermissions = SD.GetRolePermissions();
+                var roles = await _roleManager.Roles
+                    .Include(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+                    .ToListAsync();
 
                 return roles.Select(r => new RolePermissionDto
                 {
                     RoleId = r.Id,
                     RoleName = r.Name,
-                    Permissions = rolePermissions.ContainsKey(r.Name) ? rolePermissions[r.Name] : new List<string>()
+                    Permissions = r.RolePermissions.Select(rp => rp.Permission.Name).ToList()
                 }).ToList();
             }
             catch (Exception ex)
@@ -314,8 +457,9 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
             {
                 var query = _context.Employees
                     .Include(e => e.ApplicationUser)
-                    .Include(e => e.EmployeePositions)
-                    .ThenInclude(ep => ep.Position)
+                    .Include(e => e.Position)
+                    .ThenInclude(p => p.PositionRoles)
+                    .ThenInclude(pr => pr.Role)
                     .AsNoTracking()
                     .AsQueryable();
 
@@ -358,8 +502,9 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
             {
                 var employee = await _context.Employees
                     .Include(e => e.ApplicationUser)
-                    .Include(e => e.EmployeePositions)
-                    .ThenInclude(ep => ep.Position)
+                    .Include(e => e.Position)
+                    .ThenInclude(p => p.PositionRoles)
+                    .ThenInclude(pr => pr.Role)
                     .FirstOrDefaultAsync(x => x.Id == employeeId);
 
                 if (employee == null)
@@ -382,6 +527,14 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 var existingUser = await _userManager.FindByEmailAsync(model.Email);
                 if (existingUser != null)
                     return (false, "A user account with this email already exists", null);
+
+                // Validate position if provided
+                if (model.PositionId.HasValue && model.PositionId > 0)
+                {
+                    var positionExists = await _context.PositionTables.AnyAsync(p => p.Id == model.PositionId);
+                    if (!positionExists)
+                        return (false, "Selected position does not exist", null);
+                }
 
                 // Create the ApplicationUser (login account) with default password
                 var applicationUser = new ApplicationUser
@@ -406,7 +559,8 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     Phone = model.Phone,
                     Address = model.Address ?? string.Empty,
                     Gender = (GetEnums.Gender)(model.GenderId ?? 0),
-                    ApplicationUserId = applicationUser.Id
+                    ApplicationUserId = applicationUser.Id,
+                    PositionId = model.PositionId > 0 ? model.PositionId : null
                 };
 
                 _context.Employees.Add(employee);
@@ -440,9 +594,29 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 if (emailExists)
                     return (false, "Email is already in use");
 
+                // Validate position if provided
+                if (model.PositionId.HasValue && model.PositionId > 0)
+                {
+                    var positionExists = await _context.PositionTables.AnyAsync(p => p.Id == model.PositionId);
+                    if (!positionExists)
+                        return (false, "Selected position does not exist");
+                }
+
+                // Protect admin user — cannot change position away from Principal
+                var currentPosition = await _context.PositionTables
+                    .FirstOrDefaultAsync(p => p.Id == employee.PositionId);
+                if (currentPosition != null && currentPosition.Name == SD.Positions.PRINCIPAL)
+                {
+                    var principalPosition = await _context.PositionTables
+                        .FirstOrDefaultAsync(p => p.Name == SD.Positions.PRINCIPAL);
+                    if (principalPosition != null && model.PositionId != principalPosition.Id)
+                        return (false, SD.Messages.ERROR_ADMIN_POSITION_PROTECTED);
+                }
+
                 employee.FullName = $"{model.FirstName} {model.LastName}";
                 employee.Phone = model.Phone;
                 employee.Address = model.Address ?? string.Empty;
+                employee.PositionId = model.PositionId > 0 ? model.PositionId : null;
 
                 if (model.GenderId.HasValue)
                     employee.Gender = (GetEnums.Gender)model.GenderId.Value;
@@ -464,19 +638,12 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
             try
             {
                 var employee = await _context.Employees
-                    .Include(e => e.EmployeePositions)
                     .FirstOrDefaultAsync(x => x.Id == employeeId);
 
                 if (employee == null)
                     return (false, "Employee not found");
 
                 var applicationUserId = employee.ApplicationUserId;
-
-                // Remove position assignments
-                if (employee.EmployeePositions?.Count > 0)
-                {
-                    _context.EmployeePositions.RemoveRange(employee.EmployeePositions);
-                }
 
                 _context.Employees.Remove(employee);
                 await _context.SaveChangesAsync();
@@ -502,69 +669,36 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
             }
         }
 
-        public async Task<(bool Succeeded, string Message)> AssignPositionToEmployeeAsync(int employeeId, int positionId)
+        #endregion
+
+        #region Password Management
+
+        public async Task<(bool Succeeded, string Message)> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
         {
             try
             {
-                var employee = await _context.Employees
-                    .Include(e => e.EmployeePositions)
-                    .FirstOrDefaultAsync(x => x.Id == employeeId);
+                if (string.IsNullOrWhiteSpace(userId))
+                    return (false, "Invalid user");
 
-                if (employee == null)
-                    return (false, "Employee not found");
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    return (false, "User not found");
 
-                var position = await _context.PositionTables
-                    .Include(p => p.PositionRoles)
-                    .ThenInclude(pr => pr.Role)
-                    .FirstOrDefaultAsync(x => x.Id == positionId);
-
-                if (position == null)
-                    return (false, "Position not found");
-
-                // Check if already assigned
-                var existingAssignment = await _context.EmployeePositions
-                    .FirstOrDefaultAsync(x => x.EmployeeId == employeeId && x.PositionId == positionId);
-
-                if (existingAssignment != null)
-                    return (false, "Employee already assigned to this position");
-
-                var employeePosition = new EmployeePosition
+                var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+                if (!result.Succeeded)
                 {
-                    EmployeeId = employeeId,
-                    PositionId = positionId
-                };
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    _logger.LogWarning("Password change failed for user {UserId}: {Errors}", userId, errors);
+                    return (false, errors);
+                }
 
-                _context.EmployeePositions.Add(employeePosition);
-                await _context.SaveChangesAsync();
-
-                return (true, "Position assigned to employee successfully");
+                _logger.LogInformation("Password changed successfully for user {UserId}", userId);
+                return (true, "Password changed successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error assigning position {positionId} to employee {employeeId}");
-                return (false, "Error assigning position");
-            }
-        }
-
-        public async Task<(bool Succeeded, string Message)> RemovePositionFromEmployeeAsync(int employeeId, int positionId)
-        {
-            try
-            {
-                var employeePosition = await _context.EmployeePositions
-                    .FirstOrDefaultAsync(x => x.EmployeeId == employeeId && x.PositionId == positionId);
-
-                if (employeePosition == null)
-                    return (false, "Position assignment not found");
-
-                _context.EmployeePositions.Remove(employeePosition);
-                await _context.SaveChangesAsync();
-
-                return (true, "Position removed from employee successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error removing position {positionId} from employee {employeeId}");
-                return (false, "Error removing position");
+                _logger.LogError(ex, "Error changing password for user {UserId}", userId);
+                return (false, "An unexpected error occurred while changing the password");
             }
         }
 
@@ -585,9 +719,11 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 GenderId = (int?)employee.Gender,
                 ApplicationUserId = employee.ApplicationUserId,
                 IsActive = employee.ApplicationUser?.LockoutEnd == null,
-                Positions = employee.EmployeePositions?
-                    .Select(ep => ep.Position?.Name ?? string.Empty)
-                    .Where(p => !string.IsNullOrEmpty(p))
+                PositionId = employee.PositionId,
+                PositionName = employee.Position?.Name ?? string.Empty,
+                Roles = employee.Position?.PositionRoles?
+                    .Select(pr => pr.Role?.Name ?? string.Empty)
+                    .Where(r => !string.IsNullOrEmpty(r))
                     .ToList() ?? new List<string>()
             };
         }
@@ -599,13 +735,116 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 Id = position.Id,
                 Name = position.Name,
                 Description = position.Description,
-                EmployeeCount = position.EmployeePositions?.Count ?? 0,
+                EmployeeCount = position.Employees?.Count ?? 0,
                 AssignedRoles = position.PositionRoles?.Select(pr => pr.Role?.Name).Where(n => n != null).ToList() ?? new List<string>(),
                 CreatedDate = position.CreatedDate,
                 UpdatedDate = position.UpdatedDate
             };
         }
 
+        #endregion
+        #region AppSettings
+        //create, update and get
+        public async Task<(bool Succeeded, string Message)> CreateOrUpdateAppSettingsAsync(AppSettingViewModel model)
+        {
+                var userId = GetCurrentUserId();
+                var userName = GetCurrentUserName();
+            try
+            {
+
+                var existingSettings = await _context.AppSettings.FirstOrDefaultAsync();
+                if (existingSettings != null)
+                {
+                    existingSettings.FeesPartPayment = model.feespart;
+                    existingSettings.PTAPartPayment = model.ptapart;
+                    existingSettings.PaymentEvidence = model.PaymentEvidence;
+                    existingSettings.Term = (GetEnums.Term)model.term;
+                    existingSettings.SessionId = model.sessionId;
+                    _context.AppSettings.Update(existingSettings);
+                    await _context.SaveChangesAsync();
+
+                    await _logService.LogUserActionAsync(
+                        userId: userId,
+                        userName: userName,
+                        action: "User Updated App Settings",
+                        entityType: "AppSettings",
+                        entityId: "0",
+                        message: "Updated app settings",
+                        ipAddress: GetClientIpAddress(),
+                        details: $"User with ID {userId} updated app settings"
+                    );
+
+                    return (true, "App settings updated successfully");
+                    //Log the update action in service layer
+                }
+                else
+                {
+                    var newSettings = new AppSettings
+                    {
+                        FeesPartPayment = model.feespart,
+                        PTAPartPayment = model.ptapart,
+                        PaymentEvidence = model.PaymentEvidence,
+                        Term = (GetEnums.Term)model.term,
+                        SessionId = model.sessionId,
+                        ApplicationUserId = userId
+                    };
+                    _context.AppSettings.Add(newSettings);
+                    await _context.SaveChangesAsync();
+
+                    await _logService.LogUserActionAsync(
+                        userId: userId,
+                        userName: userName,
+                        action: "User Created App Settings",
+                        entityType: "AppSettings",
+                        entityId: "0",
+                        message: "Created app settings",
+                        ipAddress: GetClientIpAddress(),
+                        details: $"User with ID {userId} created app settings"
+                    );
+
+                    return (true, "App settings created successfully");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating/updating app settings for user {UserId}", userId);
+                return (false, "An unexpected error occurred while saving app settings");
+            }
+        }
+        public async Task<AppSettingViewModel> GetAppSettingsByUserIdAsync()
+        {
+            try
+            {
+                var settings = await _context.AppSettings.FirstOrDefaultAsync(); 
+                await _logService.LogUserActionAsync(
+                        userId: GetCurrentUserId(),
+                        userName: GetCurrentUserName(),
+                        action: "View App Settings",
+                        entityType: "AppSettings",
+                        entityId: "0",
+                        message: "Viewed app settings",
+                        ipAddress: GetClientIpAddress(),
+                        details: $"User with ID {GetCurrentUserId()} viewed app settings"
+                    );
+                if (settings == null)
+                    return new AppSettingViewModel { feespart = false, ptapart = false, PaymentEvidence = false, term = 0, sessionId = 0 };
+                return new AppSettingViewModel
+                {
+                    id = settings.Id,
+                    feespart = settings.FeesPartPayment,
+                    ptapart = settings.PTAPartPayment,
+                    PaymentEvidence = settings.PaymentEvidence,
+                    term = (int)settings.Term,
+                    sessionId = settings.SessionId
+                };
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving app settings for user {UserId}");
+                return new AppSettingViewModel { feespart = false, ptapart = false, PaymentEvidence = false, term = 0, sessionId = 0 };
+            }
+        }
         #endregion
     }
 }

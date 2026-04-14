@@ -2,6 +2,7 @@
 @model GrahamSchoolAdminSystemWeb.Pages.admin.schoolclass.indexModel
 @{
     ViewData["Title"] = "School Classes";
+    await Permissions.InitializeAsync(User);
 }
 
 @section Sheets{
@@ -18,9 +19,12 @@
         <p class="text-muted">Manage and organize school classes</p>
     </div>
     <div class="header-actions">
+        @if (Permissions.CanCreate)
+        {
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#schoolClassModal" onclick="resetForm()">
             <i class="bi bi-plus-circle me-2"></i>Add School Class
         </button>
+        }
     </div>
 </div>
 
@@ -58,11 +62,10 @@
         <table id="schoolClassesTable" class="table table-hover">
             <thead>
                 <tr>
-                    <th class="col-1">#</th>
-                    <th class="col-4">Class Name</th>
-                    <th class="col-3">Created Date</th>
-                    <th class="col-3">Last Updated</th>
-                    <th class="col-1">Actions</th>
+                    <th>#</th>
+                    <th>Class Name</th>
+                    <th>Created Date</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,6 +75,8 @@
 </div>
 
 <!-- Add Modal -->
+@if (Permissions.CanCreate)
+{
 <div class="modal fade" id="schoolClassModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -108,8 +113,11 @@
         </div>
     </div>
 </div>
+}
 
 <!-- Edit Modal -->
+@if (Permissions.CanEdit)
+{
 <div class="modal fade" id="schoolClassEditModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -148,9 +156,17 @@
         </div>
     </div>
 </div>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <partial name="_DatatablesScriptsFiles" />
-    <script src="~/js/appmain.js"></script>
+    <script>
+        window.userPermissions = {
+            canCreate: @Json.Serialize(Permissions.CanCreate),
+            canEdit: @Json.Serialize(Permissions.CanEdit),
+            canDelete: @Json.Serialize(Permissions.CanDelete)
+        };
+    </script>
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
 }

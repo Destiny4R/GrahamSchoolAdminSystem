@@ -1,0 +1,151 @@
+@page "{id:int}"
+@model GrahamSchoolAdminSystemWeb.Pages.admin.student_payments.receiptModel
+@{
+    ViewData["Title"] = "Payment Receipt";
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <style>
+        .receipt-container { max-width: 700px; margin: 0 auto; }
+        .receipt-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 1rem; margin-bottom: 1rem; }
+        .receipt-header h2 { margin-bottom: 0.25rem; }
+        .receipt-meta { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .receipt-table th, .receipt-table td { padding: 0.5rem 1rem; }
+        .receipt-total { font-size: 1.25rem; font-weight: bold; }
+        @@media print {
+            #sidebar, #topbar, #overlay, .page-header, .no-print { display: none !important; }
+            .receipt-container { max-width: 100%; }
+            body { background: #fff !important; }
+        }
+    </style>
+}
+
+<div class="page-header no-print">
+    <div>
+        <h1><i class="bi bi-receipt"></i> Payment Receipt</h1>
+        <p class="text-muted">Receipt for payment transaction</p>
+    </div>
+    <div class="header-actions">
+        <a asp-page="/admin/student-payments/index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Payments
+        </a>
+        @if (Model.Receipt != null)
+        {
+            <a href="/admin/student-payments/detail/@Model.Receipt.PaymentId" class="btn btn-outline-info">
+                <i class="bi bi-eye me-2"></i>View Detail
+            </a>
+            @if (Model.Receipt.State == "Pending" || Model.Receipt.State == "Approved")
+            {
+                <a href="/admin/student-payments/full-receipt/@Model.Receipt.TermRegId" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-file-earmark-text me-2"></i>Full Receipt
+                </a>
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="bi bi-printer me-2"></i>Print Receipt
+                </button>
+            }
+            else
+            {
+                <span class="badge bg-danger fs-6 ms-2">Printing disabled — Payment @Model.Receipt.State</span>
+            }
+        }
+    </div>
+</div>
+
+<div class="page-content">
+    @if (Model.Receipt != null)
+    {
+        <div class="receipt-container card">
+            <div class="card-body p-4">
+                <div class="receipt-header">
+                    <h2>GIS-Gboko</h2>
+                    <p class="text-muted mb-0">Payment Receipt</p>
+                </div>
+
+                <div class="receipt-meta">
+                    <div>
+                        <p class="mb-1"><strong>Receipt No:</strong> @Model.Receipt.Reference</p>
+                        <p class="mb-1"><strong>Student:</strong> @Model.Receipt.StudentName</p>
+                        <p class="mb-1"><strong>Class:</strong> @Model.Receipt.ClassName</p>
+                    </div>
+                    <div class="text-end">
+                        <p class="mb-1"><strong>Date:</strong> @Model.Receipt.PaymentDate.ToString("dd/MM/yyyy hh:mm tt")</p>
+                        <p class="mb-1"><strong>Session:</strong> @Model.Receipt.SessionName</p>
+                        <p class="mb-1"><strong>Term:</strong> @Model.Receipt.TermName</p>
+                        <p class="mb-1">
+                            <strong>Status:</strong>
+                            <span class="badge @(Model.Receipt.Status == "Completed" ? "bg-success" : "bg-warning")">
+                                @Model.Receipt.Status
+                            </span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>State:</strong>
+                            @{
+                                var stateCls = Model.Receipt.State switch
+                                {
+                                    "Approved" => "bg-success",
+                                    "Pending" => "bg-warning text-dark",
+                                    "Rejected" => "bg-danger",
+                                    "Cancelled" => "bg-dark",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @stateCls">@Model.Receipt.State</span>
+                        </p>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Receipt.Narration))
+                {
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-chat-left-text me-2"></i><strong>Narration:</strong> @Model.Receipt.Narration
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Receipt.RejectMessage))
+                {
+                    <div class="alert alert-danger mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i><strong>Rejection Reason:</strong> @Model.Receipt.RejectMessage
+                    </div>
+                }
+
+                <table class="table table-bordered receipt-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Category</th>
+                            <th>Item</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in Model.Receipt.LineItems)
+                        {
+                            <tr>
+                                <td>@line.CategoryName</td>
+                                <td>@line.ItemName</td>
+                                <td class="text-end">@GrahamSchoolAdminSystemAccess.SD.ToNaira(line.AmountPaid)</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <td colspan="2" class="text-end receipt-total">Total Paid:</td>
+                            <td class="text-end receipt-total">@GrahamSchoolAdminSystemAccess.SD.ToNaira(Model.Receipt.TotalAmount)</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="text-center mt-4 text-muted">
+                    <small>This is a computer-generated receipt. No signature required.</small>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            Receipt not found.
+        </div>
+    }
+</div>

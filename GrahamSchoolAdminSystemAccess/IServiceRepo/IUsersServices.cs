@@ -1,5 +1,6 @@
 ﻿using GrahamSchoolAdminSystemModels.DTOs;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
         Task<(bool Succeeded, string Message)> UpdatePositionAsync(PositionViewModel model);
         Task<(bool Succeeded, string Message)> DeletePositionAsync(int positionId);
         Task<PositionDto> GetPositionByIdAsync(int positionId);
+        IEnumerable<SelectListItem> PositionsList();
         Task<(List<PositionDto> data, int recordsTotal, int recordsFiltered)> GetPositionsAsync(int start, int length, string searchValue, int sortColumnIndex, string sortDirection);
 
         // Position-Role Assignment
@@ -22,7 +24,10 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
         Task<AssignRoleViewModel> GetRoleAssignmentViewAsync(int positionId);
         Task<(bool Succeeded, string Message)> RemoveRoleFromPositionAsync(int positionId, string roleId);
 
-        // Get available roles with permissions
+        // Role-Permission Management
+        Task<(bool Succeeded, string Message)> UpdateRolePermissionsAsync(string roleId, List<int> permissionIds);
+
+        // Get available roles with permissions (DB-driven)
         Task<List<RolePermissionDto>> GetAvailableRolesWithPermissionsAsync();
 
         // Employee Management
@@ -31,7 +36,12 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
         Task<(bool Succeeded, string Message, object Data)> CreateEmployeeAsync(EmployeeViewModel model);
         Task<(bool Succeeded, string Message)> UpdateEmployeeAsync(EmployeeViewModel model);
         Task<(bool Succeeded, string Message)> DeleteEmployeeAsync(int employeeId);
-        Task<(bool Succeeded, string Message)> AssignPositionToEmployeeAsync(int employeeId, int positionId);
-        Task<(bool Succeeded, string Message)> RemovePositionFromEmployeeAsync(int employeeId, int positionId);
+
+        // Password Management
+        Task<(bool Succeeded, string Message)> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
+        #region App Settings
+        Task<(bool Succeeded, string Message)> CreateOrUpdateAppSettingsAsync(AppSettingViewModel model);
+        Task<AppSettingViewModel> GetAppSettingsByUserIdAsync();
+        #endregion
     }
 }

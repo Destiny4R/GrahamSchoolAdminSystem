@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using SixLabors.ImageSharp;
-using static GrahamSchoolAdminSystemModels.Models.GetEnums;
 
 namespace GrahamSchoolAdminSystemAccess
 {
@@ -15,6 +14,18 @@ namespace GrahamSchoolAdminSystemAccess
             public const string CASHIER = "Cashier";
         }
 
+        // Protected Position Names
+        public static class Positions
+        {
+            public const string PRINCIPAL = "Principal";
+        }
+        public static string ToNaira(decimal money)
+        {
+            char naira = (char)8358;
+            string Money;
+            Money = money.ToString("c");
+            return Money.Replace('$', naira);
+        }
         // Permission Names
         public static class Permissions
         {
@@ -22,6 +33,7 @@ namespace GrahamSchoolAdminSystemAccess
             public const string EDIT = "Edit";
             public const string DELETE = "Delete";
             public const string VIEW = "View";
+            public const string REPORT = "Report";
         }
 
         // Route Names
@@ -45,6 +57,9 @@ namespace GrahamSchoolAdminSystemAccess
             public const string ERROR_ROLE_ALREADY_ASSIGNED = "Role is already assigned to this position";
             public const string ERROR_INVALID_POSITION = "Invalid position selected";
             public const string ERROR_UNEXPECTED = "An unexpected error occurred. Please try again.";
+            public const string ERROR_PRINCIPAL_PROTECTED = "The Principal position is a system-protected position and cannot be modified or deleted";
+            public const string ERROR_ADMIN_ROLE_PROTECTED = "The Admin role permissions cannot be modified when assigned to the Principal position";
+            public const string ERROR_ADMIN_POSITION_PROTECTED = "The admin user's position cannot be changed from Principal";
         }
 
         // Default Roles to Initialize
@@ -61,53 +76,9 @@ namespace GrahamSchoolAdminSystemAccess
             Permissions.CREATE,
             Permissions.EDIT,
             Permissions.DELETE,
-            Permissions.VIEW
+            Permissions.VIEW,
+            Permissions.REPORT
         };
-
-        // Permission mapping for roles (legacy - for reference only)
-        public static Dictionary<string, List<string>> GetRolePermissions()
-        {
-            return new Dictionary<string, List<string>>
-            {
-                {
-                    Roles.ADMIN, new List<string>
-                    {
-                        "View Dashboard",
-                        "Manage Positions",
-                        "Manage Employees",
-                        "Manage Roles",
-                        "View Reports",
-                        "Manage Students",
-                        "Manage Fees",
-                        "Manage Session",
-                        "Manage Classes",
-                        "User Management",
-                        "System Settings"
-                    }
-                },
-                {
-                    Roles.ACCOUNT, new List<string>
-                    {
-                        "View Dashboard",
-                        "View Reports",
-                        "Manage Fees",
-                        "Manage Session",
-                        "View Students",
-                        "View Classes"
-                    }
-                },
-                {
-                    Roles.CASHIER, new List<string>
-                    {
-                        "View Dashboard",
-                        "Process Payments",
-                        "View Student Fees",
-                        "Generate Receipts",
-                        "View Reports"
-                    }
-                }
-            };
-        }
 
         /// <summary>
         /// Get permission color badge style
@@ -166,41 +137,66 @@ namespace GrahamSchoolAdminSystemAccess
                 return false;
             }
         }
-        //Write a method for generating Payment invoice numbers
-        public static string GetSpanBadgeStatus(PaymentStatus status)
+
+        public static int? ParseGenderId(string genderValue)
         {
-            switch (status)
+            if (string.IsNullOrWhiteSpace(genderValue))
+                return null;
+
+            genderValue = genderValue.Trim().ToLower();
+
+            return genderValue switch
             {
-                case PaymentStatus.Approved:
-                    return "<Span class='badge bg-success'><i class='bi bi-check2-all me-2'></i>Approved</span>";
-                case PaymentStatus.Pending:
-                    return "<Span class='badge bg-secondary'><i class='bi bi-arrow-clockwise me-2'></i>Pending</span>";
-                default:
-                    return "<Span class='badge bg-danger'><i class='bi bi-x me-2'></i>Rejected</span>";
-            }
+                "male" or "m" or "1" => 1,
+                "female" or "f" or "2" => 2,
+                _ => null
+            };
         }
 
-        public static string GetSpanBadgeState(PaymentState state)
+        public static bool IsExcelFileSecure(IFormFile file)
         {
-            switch (state)
-            {
-                case PaymentState.Cancelled:
+            if (file == null || file.Length < 4)
+                return false;
 
-                    return "<Span class='badge bg-warning'><i class='bi bi-x me-2'></i>Cancelled</span>";
-                case PaymentState.PartPayment:
+            using var stream = file.OpenReadStream();
+            using var reader = new BinaryReader(stream);
 
-                    return "<Span class='badge bg-info'><i class='bi bi-circle-half me-2'></i>Part Payment</span>";
-                default:
-                    return "<Span class='badge bg-success'><i class='bi bi-check2-all me-2'></i>Completed</span>";
-            }
+            var headerBytes = reader.ReadBytes(4);
+
+            // XLS (OLE Compound File): D0 CF 11 E0
+            var xlsSignature = new byte[] { 0xD0, 0xCF, 0x11, 0xE0 };
+
+            // XLSX (ZIP format): 50 4B 03 04
+            var xlsxSignature = new byte[] { 0x50, 0x4B, 0x03, 0x04 };
+
+            return headerBytes.SequenceEqual(xlsSignature) ||
+                   headerBytes.SequenceEqual(xlsxSignature);
         }
 
-        public static string ToNaira(decimal money)
+        public static bool IsExcelFile(IFormFile file)
         {
-            char naira = (char)8358;
-            string Money;
-            Money = money.ToString("c");
-            return Money.Replace('$', naira);
+            if (file == null || file.Length == 0)
+                return false;
+
+            // Allowed extensions
+            var allowedExtensions = new[] { ".xls", ".xlsx" };
+
+            // Allowed MIME types
+            var allowedMimeTypes = new[]
+            {
+            "application/vnd.ms-excel", // .xls
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
+        };
+
+            var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                return false;
+
+            if (!allowedMimeTypes.Contains(file.ContentType))
+                return false;
+
+            return true;
         }
     }
 }

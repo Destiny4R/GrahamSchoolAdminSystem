@@ -30,10 +30,31 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("CanPayPartPayment")
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("FeesPartPayment")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("PTAPartPayment")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("PaymentEvidence")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Term")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
+
+                    b.HasIndex("SessionId");
 
                     b.ToTable("AppSettings");
                 });
@@ -128,21 +149,6 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.EmployeePosition", b =>
-                {
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PositionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("EmployeeId", "PositionId");
-
-                    b.HasIndex("PositionId");
-
-                    b.ToTable("EmployeePositions");
-                });
-
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.EmployeesTable", b =>
                 {
                     b.Property<int>("Id")
@@ -176,75 +182,16 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                         .HasMaxLength(11)
                         .HasColumnType("varchar(11)");
 
+                    b.Property<int?>("PositionId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId");
 
+                    b.HasIndex("PositionId");
+
                     b.ToTable("Employees");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.FeesPaymentTable", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<decimal>("Fees")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("varchar(450)");
-
-                    b.Property<string>("InvoiceNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Message")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("Narration")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<int>("PaymentState")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StaffUserId")
-                        .IsRequired()
-                        .HasMaxLength(470)
-                        .HasColumnType("varchar(470)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TermRegId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TermlyFeesId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TermRegId");
-
-                    b.HasIndex("TermlyFeesId");
-
-                    b.ToTable("FeesPayments");
                 });
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.LogsTable", b =>
@@ -314,7 +261,7 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.ToTable("LogsTables");
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.OtherPayFeesSetUp", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PaymentCategory", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -322,62 +269,30 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<double>("Amount")
-                        .HasColumnType("double");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("OtherPayId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SchoolClassId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SessionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Term")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OtherPayId");
-
-                    b.HasIndex("SchoolClassId");
-
-                    b.HasIndex("SessionId");
-
-                    b.ToTable("OtherPayFeesSetUp");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.OtherPayItemsTable", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("varchar(250)");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("Id");
 
-                    b.ToTable("OtherPayItemsTable");
+                    b.ToTable("PaymentCategories");
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.OtherPayment", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PaymentItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -385,62 +300,35 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(65,30)");
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("varchar(450)");
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
-                    b.Property<string>("InvoiceNumber")
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<decimal>("ItemAmount")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("Message")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("Narration")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<int>("PayFeesSetUpId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PaymentState")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StaffUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("varchar(450)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TermRegId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedDate")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PayFeesSetUpId");
+                    b.HasIndex("CategoryId");
 
-                    b.HasIndex("TermRegId");
-
-                    b.ToTable("OtherPayments");
+                    b.ToTable("PaymentItems");
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PTAFeesPayments", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PaymentSetup", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -449,79 +337,18 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(65,30)");
+                    b.Property<int>("ClassId")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<decimal>("Fees")
-                        .HasColumnType("decimal(65,30)");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("varchar(450)");
-
-                    b.Property<string>("InvoiceNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Message")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("Narration")
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
-
-                    b.Property<int>("PaymentState")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PtaFeesSetupId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StaffUserId")
-                        .IsRequired()
-                        .HasMaxLength(470)
-                        .HasColumnType("varchar(470)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TermRegId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PtaFeesSetupId");
-
-                    b.HasIndex("TermRegId");
-
-                    b.ToTable("PTAFeesPayments");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PTAFeesSetup", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("SchoolClassId")
+                    b.Property<int>("PaymentItemId")
                         .HasColumnType("int");
 
                     b.Property<int>("SessionId")
@@ -530,16 +357,19 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.Property<int>("Term")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedDate")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolClassId");
+                    b.HasIndex("ClassId");
 
                     b.HasIndex("SessionId");
 
-                    b.ToTable("PTAFeesSetups");
+                    b.HasIndex("PaymentItemId", "SessionId", "Term", "ClassId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentSetups");
                 });
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.Permission", b =>
@@ -700,6 +530,78 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.ToTable("SessionYears");
                 });
 
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EvidenceFilePath")
+                        .HasMaxLength(420)
+                        .HasColumnType("varchar(420)");
+
+                    b.Property<string>("Narration")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RejectMessage")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TermRegId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TermRegId");
+
+                    b.ToTable("StudentPayments");
+                });
+
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentPaymentItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AmountPaid")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("PaymentItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentPaymentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentItemId");
+
+                    b.HasIndex("StudentPaymentId");
+
+                    b.ToTable("StudentPaymentItems");
+                });
+
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentTable", b =>
                 {
                     b.Property<int>("Id")
@@ -785,63 +687,6 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("TermRegistrations");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.TermlyFeesSetup", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("SchoolClassId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SessionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Term")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SchoolClassId");
-
-                    b.HasIndex("SessionId");
-
-                    b.ToTable("TermlyFeesSetups");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.UserRole", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("RoleId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("AssignedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("AssignedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -950,23 +795,23 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.EmployeePosition", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.AppSettings", b =>
                 {
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.EmployeesTable", "Employee")
-                        .WithMany("EmployeePositions")
-                        .HasForeignKey("EmployeeId")
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.PositionTable", "Position")
-                        .WithMany("EmployeePositions")
-                        .HasForeignKey("PositionId")
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.SessionYear", "SessionYear")
+                        .WithMany()
+                        .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Employee");
+                    b.Navigation("ApplicationUser");
 
-                    b.Navigation("Position");
+                    b.Navigation("SessionYear");
                 });
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.EmployeesTable", b =>
@@ -977,110 +822,52 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.PositionTable", "Position")
+                        .WithMany("Employees")
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("ApplicationUser");
+
+                    b.Navigation("Position");
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.FeesPaymentTable", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PaymentItem", b =>
                 {
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.TermRegistration", "TermRegistration")
-                        .WithMany()
-                        .HasForeignKey("TermRegId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.PaymentCategory", "PaymentCategory")
+                        .WithMany("PaymentItems")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.TermlyFeesSetup", "TermlyFeesSetup")
-                        .WithMany()
-                        .HasForeignKey("TermlyFeesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TermRegistration");
-
-                    b.Navigation("TermlyFeesSetup");
+                    b.Navigation("PaymentCategory");
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.OtherPayFeesSetUp", b =>
-                {
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.OtherPayItemsTable", "OtherPayItems")
-                        .WithMany()
-                        .HasForeignKey("OtherPayId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.SchoolClasses", "Schoolclasses")
-                        .WithMany()
-                        .HasForeignKey("SchoolClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.SessionYear", "SessionYear")
-                        .WithMany()
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("OtherPayItems");
-
-                    b.Navigation("Schoolclasses");
-
-                    b.Navigation("SessionYear");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.OtherPayment", b =>
-                {
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.OtherPayFeesSetUp", "OtherPayFeesSetUp")
-                        .WithMany()
-                        .HasForeignKey("PayFeesSetUpId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.TermRegistration", "Termregistration")
-                        .WithMany()
-                        .HasForeignKey("TermRegId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("OtherPayFeesSetUp");
-
-                    b.Navigation("Termregistration");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PTAFeesPayments", b =>
-                {
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.PTAFeesSetup", "PTAFeesSetup")
-                        .WithMany()
-                        .HasForeignKey("PtaFeesSetupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.TermRegistration", "TermRegistration")
-                        .WithMany()
-                        .HasForeignKey("TermRegId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PTAFeesSetup");
-
-                    b.Navigation("TermRegistration");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PTAFeesSetup", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PaymentSetup", b =>
                 {
                     b.HasOne("GrahamSchoolAdminSystemModels.Models.SchoolClasses", "SchoolClass")
                         .WithMany()
-                        .HasForeignKey("SchoolClassId")
+                        .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.SessionYear", "SessionYear")
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.PaymentItem", "PaymentItem")
+                        .WithMany("PaymentSetups")
+                        .HasForeignKey("PaymentItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.SessionYear", "Session")
                         .WithMany()
                         .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("PaymentItem");
+
                     b.Navigation("SchoolClass");
 
-                    b.Navigation("SessionYear");
+                    b.Navigation("Session");
                 });
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PositionRole", b =>
@@ -1092,7 +879,7 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                         .IsRequired();
 
                     b.HasOne("GrahamSchoolAdminSystemModels.Models.ApplicationRole", "Role")
-                        .WithMany()
+                        .WithMany("PositionRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1119,6 +906,36 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentPayment", b =>
+                {
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.TermRegistration", "TermRegistration")
+                        .WithMany()
+                        .HasForeignKey("TermRegId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TermRegistration");
+                });
+
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentPaymentItem", b =>
+                {
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.PaymentItem", "PaymentItem")
+                        .WithMany()
+                        .HasForeignKey("PaymentItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GrahamSchoolAdminSystemModels.Models.StudentPayment", "StudentPayment")
+                        .WithMany("PaymentItems")
+                        .HasForeignKey("StudentPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PaymentItem");
+
+                    b.Navigation("StudentPayment");
                 });
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentTable", b =>
@@ -1165,44 +982,6 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
                     b.Navigation("SessionYear");
 
                     b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.TermlyFeesSetup", b =>
-                {
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.SchoolClasses", "SchoolClass")
-                        .WithMany()
-                        .HasForeignKey("SchoolClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.SessionYear", "SessionYear")
-                        .WithMany()
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SchoolClass");
-
-                    b.Navigation("SessionYear");
-                });
-
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.UserRole", b =>
-                {
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.ApplicationRole", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GrahamSchoolAdminSystemModels.Models.ApplicationUser", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1258,19 +1037,19 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.ApplicationRole", b =>
                 {
+                    b.Navigation("PositionRoles");
+
                     b.Navigation("RolePermissions");
-
-                    b.Navigation("UserRoles");
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.ApplicationUser", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PaymentCategory", b =>
                 {
-                    b.Navigation("UserRoles");
+                    b.Navigation("PaymentItems");
                 });
 
-            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.EmployeesTable", b =>
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PaymentItem", b =>
                 {
-                    b.Navigation("EmployeePositions");
+                    b.Navigation("PaymentSetups");
                 });
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.Permission", b =>
@@ -1280,9 +1059,14 @@ namespace GrahamSchoolAdminSystemAccess.Migrations
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.PositionTable", b =>
                 {
-                    b.Navigation("EmployeePositions");
+                    b.Navigation("Employees");
 
                     b.Navigation("PositionRoles");
+                });
+
+            modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentPayment", b =>
+                {
+                    b.Navigation("PaymentItems");
                 });
 
             modelBuilder.Entity("GrahamSchoolAdminSystemModels.Models.StudentTable", b =>

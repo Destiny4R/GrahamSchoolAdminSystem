@@ -1,11 +1,16 @@
+using GrahamSchoolAdminSystemAccess;
 using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using GrahamSchoolAdminSystemWeb.Attributes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 
 namespace GrahamSchoolAdminSystemWeb.Pages.admin.schoolclass
 {
+    [Authorize]
+    [RequirePermission(SD.Permissions.VIEW)]
     public class indexModel : PageModel
     {
         private readonly IUnitOfWork _unitOfWork;

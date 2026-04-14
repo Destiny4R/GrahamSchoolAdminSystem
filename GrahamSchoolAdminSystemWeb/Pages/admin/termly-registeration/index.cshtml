@@ -2,6 +2,7 @@
 @model GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration.indexModel
 @{
     ViewData["Title"] = "Termly Registration";
+    await Permissions.InitializeAsync(User);
 }
 @section Sheets {
     <link rel="stylesheet" href="~/css/shared-components.css" />
@@ -18,11 +19,20 @@
     </div>
     <div class="header-actions">
         <div class="btn-group">
+            @if (Permissions.CanCreate)
+            {
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#batchExcelModal">
+                <i class="bi bi-file-earmark-excel me-1"></i> Excel Upload
+            </button>
             <a asp-page="batch-registration" class="btn btn-primary">Batch Registration</a>
             <a asp-page="upsert" class="btn btn-primary">Single Registration</a>
+            }
+            @if (Permissions.CanDelete)
+            {
             <button id="bulkDeleteBtn" class="btn btn-danger" style="display:none;">
                 <i class="bi bi-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
             </button>
+            }
         </div>
     </div>
 </div>
@@ -76,7 +86,7 @@
 
     <!-- DataTable Container -->
     <div class="datatable-container">
-        <table id="studentsTermRegTable" class="table table-hover">
+        <table id="studentsTermRegTable" class="table table-hover" style="font-family:'Playfair Display', serif;">
             <thead>
                 <tr>
                     <th style="width: 50px;">
@@ -97,10 +107,90 @@
         </table>
     </div>
 </div>
+
+<!-- Batch Excel Upload Modal -->
+<div class="modal fade" id="batchExcelModal" tabindex="-1" aria-labelledby="batchExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="batchExcelModalLabel">
+                    <i class="bi bi-file-earmark-excel me-2"></i>Batch Registration via Excel Upload
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Upload an Excel file containing <strong>only student registration numbers</strong> (one per row in the first column).
+                    All students will be registered into the selected Term, Session, Class, and Sub-Class.
+                </div>
+                <form id="batchExcelForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="batchSession" class="form-label">Academic Session <span class="text-danger">*</span></label>
+                            <select class="form-select" id="batchSession" required asp-items="@Model.Selections.AcademicSession">
+                                <option value="">---Select Session---</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="batchTerm" class="form-label">Term <span class="text-danger">*</span></label>
+                            <select class="form-select" id="batchTerm" required asp-items="@Model.Selections.Terms">
+                                <option value="">---Select Term---</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="batchClass" class="form-label">Class <span class="text-danger">*</span></label>
+                            <select class="form-select" id="batchClass" required asp-items="@Model.Selections.SchoolClasses">
+                                <option value="">---Select Class---</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="batchSubClass" class="form-label">Sub Class <span class="text-danger">*</span></label>
+                            <select class="form-select" id="batchSubClass" required asp-items="@Model.Selections.SubClass">
+                                <option value="">---Select Sub Class---</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="batchExcelFile" class="form-label">Excel File (.xlsx) <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="batchExcelFile" accept=".xlsx,.xls" required />
+                            <div class="form-text">The file should contain student registration numbers in the first column.</div>
+                        </div>
+                    </div>
+                </form>
+                <!-- Results Container (hidden by default) -->
+                <div id="batchResultsContainer" class="mt-3" style="display:none;">
+                    <hr />
+                    <h6><i class="bi bi-clipboard-data me-2"></i>Registration Results</h6>
+                    <div id="batchResultsSummary"></div>
+                    <div id="batchResultsErrors" class="mt-2" style="display:none;">
+                        <p class="text-danger fw-bold mb-1"><i class="bi bi-exclamation-triangle me-1"></i>Failed Registrations:</p>
+                        <div id="batchErrorsList" class="small" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Close
+                </button>
+                <button type="button" class="btn btn-success" id="btnSubmitBatchExcel">
+                    <i class="bi bi-upload me-1"></i>Upload & Register
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_DatatablesScriptsFiles" />
     <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
     <script src="~/lib/jquery.blockui/jquery.blockui.min.js"></script>
+    <script>
+        window.userPermissions = {
+            canCreate: @Json.Serialize(Permissions.CanCreate),
+            canEdit: @Json.Serialize(Permissions.CanEdit),
+            canDelete: @Json.Serialize(Permissions.CanDelete)
+        };
+    </script>
     <script src="~/js/appmain.js" asp-append-version="true"></script>
     <script>
         $(document).ready(function(){
@@ -154,6 +244,9 @@
                             autoWidth: true,
                             width: '50px',
                             render: function (data, type, row) {
+                                if (row.hasPayment) {
+                                    return '<i class="bi bi-lock-fill text-warning" title="Payment recorded — protected"></i>';
+                                }
                                 return `<input type="checkbox" class="form-check-input row-checkbox" value="${row.id}" />`;
                             }
                         },
@@ -187,17 +280,22 @@
                             orderable: false,
                             searchable: false,
                             render: function (data, type, row) {
-                                return `
-                                    <div class="dropdown">
-                                        <button class="btn btn-dark btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical me-1"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="/admin/termly-registeration/upsert?id=${row.id}"><i class="bi bi-pencil-square"></i> Edit</a></li>
-                                            <li><button class="dropdown-item btn-delete-single" data-id="${row.id}"><i class="bi bi-trash"></i> Delete</button></li>
-                                        </ul>
-                                    </div>
-                                `;
+                                if (row.hasPayment) {
+                                    return '<span class="badge bg-warning text-dark" title="Payment recorded — cannot edit or delete"><i class="bi bi-lock-fill me-1"></i>Locked</span>';
+                                }
+                                var perms = window.userPermissions || {};
+                                var items = '';
+                                if (perms.canEdit) {
+                                    items += '<li><a class="dropdown-item" href="/admin/termly-registeration/upsert?id=' + row.id + '"><i class="bi bi-pencil-square"></i> Edit</a></li>';
+                                }
+                                if (perms.canDelete) {
+                                    items += '<li><button class="dropdown-item btn-delete-single" data-id="' + row.id + '"><i class="bi bi-trash"></i> Delete</button></li>';
+                                }
+                                if (!items) return '';
+                                return '<div class="dropdown">' +
+                                    '<button class="btn btn-dark btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">' +
+                                    '<i class="bi bi-three-dots-vertical me-1"></i></button>' +
+                                    '<ul class="dropdown-menu">' + items + '</ul></div>';
                             }
                         }
                     ]
@@ -415,6 +513,89 @@
                 $('#subclass').val('');
                 tabledata.ajax.reload();
             }
+
+            // ========================================================
+            // Batch Excel Upload
+            // ========================================================
+            $('#btnSubmitBatchExcel').on('click', function () {
+                var sessionId = $('#batchSession').val();
+                var term = $('#batchTerm').val();
+                var classId = $('#batchClass').val();
+                var subClassId = $('#batchSubClass').val();
+                var fileInput = document.getElementById('batchExcelFile');
+                var file = fileInput.files[0];
+
+                if (!sessionId) { Swal.fire('Warning', 'Please select an Academic Session', 'warning'); return; }
+                if (!term) { Swal.fire('Warning', 'Please select a Term', 'warning'); return; }
+                if (!classId) { Swal.fire('Warning', 'Please select a Class', 'warning'); return; }
+                if (!subClassId) { Swal.fire('Warning', 'Please select a Sub Class', 'warning'); return; }
+                if (!file) { Swal.fire('Warning', 'Please select an Excel file', 'warning'); return; }
+
+                var formData = new FormData();
+                formData.append('excelFile', file);
+                formData.append('sessionId', sessionId);
+                formData.append('term', term);
+                formData.append('schoolClassId', classId);
+                formData.append('schoolSubclassId', subClassId);
+
+                var $btn = $(this);
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Processing...');
+                $('#batchResultsContainer').hide();
+
+                $.ajax({
+                    url: '/api/v1/termregistration/batch-excel',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (resp) {
+                        $btn.prop('disabled', false).html('<i class="bi bi-upload me-1"></i>Upload & Register');
+
+                        if (resp.success) {
+                            var summaryHtml = '<div class="alert alert-success mb-0">' +
+                                '<i class="bi bi-check-circle-fill me-2"></i>' +
+                                '<strong>' + resp.successCount + '</strong> registered successfully';
+                            if (resp.failureCount > 0) {
+                                summaryHtml += ', <strong class="text-danger">' + resp.failureCount + '</strong> failed';
+                            }
+                            summaryHtml += ' out of <strong>' + resp.total + '</strong> total.</div>';
+                            $('#batchResultsSummary').html(summaryHtml);
+
+                            if (resp.errors && resp.errors.length > 0) {
+                                var errorsHtml = '<ul class="list-group list-group-flush">';
+                                resp.errors.forEach(function (err) {
+                                    errorsHtml += '<li class="list-group-item list-group-item-danger py-1 px-2"><small>' + err + '</small></li>';
+                                });
+                                errorsHtml += '</ul>';
+                                $('#batchErrorsList').html(errorsHtml);
+                                $('#batchResultsErrors').show();
+                            } else {
+                                $('#batchResultsErrors').hide();
+                            }
+
+                            $('#batchResultsContainer').show();
+
+                            // Reload the DataTable
+                            if (tabledata) {
+                                tabledata.ajax.reload(null, false);
+                            }
+                        } else {
+                            Swal.fire('Error', resp.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false).html('<i class="bi bi-upload me-1"></i>Upload & Register');
+                        Swal.fire('Error', 'An unexpected error occurred during batch registration', 'error');
+                    }
+                });
+            });
+
+            // Reset modal on close
+            $('#batchExcelModal').on('hidden.bs.modal', function () {
+                $('#batchExcelForm')[0].reset();
+                $('#batchResultsContainer').hide();
+                $('#batchResultsErrors').hide();
+            });
         });
     </script>
 }

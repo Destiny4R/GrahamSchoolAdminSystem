@@ -40,4 +40,32 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
         // Gender display
         public string GenderDisplay => GenderId.HasValue ? ((Gender)GenderId.Value).ToString() : "Not Specified";
     }
+
+    public class StudentImportViewModel
+    {
+        [Required]
+        public string Email { get; set; }
+
+        [Required]
+        public string Surname { get; set; }
+
+        [Required]
+        public string Firstname { get; set; }
+
+        public string Othername { get; set; }
+
+        [Required]
+        public int GenderId { get; set; } // 1 = Male, 2 = Female
+
+        public string PassportPath { get; set; }
+    }
+
+    public class StudentImportResult
+    {
+        public int RowNumber { get; set; }
+        public bool Succeeded { get; set; }
+        public string Message { get; set; }
+        public string Email { get; set; }
+    }
+
 }

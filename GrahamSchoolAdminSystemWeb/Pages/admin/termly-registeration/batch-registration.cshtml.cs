@@ -1,30 +1,41 @@
+using GrahamSchoolAdminSystemAccess;
 using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemModels.Models;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using GrahamSchoolAdminSystemWeb.Attributes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
 {
+    [Authorize]
+    [RequirePermission(SD.Permissions.VIEW)]
     public class batch_registrationModel : PageModel
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IViewsSelectionOptions _viewsSelectionOptions;
 
         public ViewSelections Selections { get; set; } = new();
         public SelectOptionsData Selectsearch { get; set; }
 
         public List<TermRegistration> TermReg { get; set; } = new List<TermRegistration>();
         public SelectOptionsDataForTermReg termRegBatch { get; set; }
-        public batch_registrationModel(IUnitOfWork unitOfWork)
+        public batch_registrationModel(IUnitOfWork unitOfWork, IViewsSelectionOptions viewsSelectionOptions)
         {
-            this._unitOfWork = unitOfWork;
-            Selections = _unitOfWork.FinanceServices.GetFeesSetupSelectionsAsync().Result;
+            _unitOfWork = unitOfWork;
+            _viewsSelectionOptions = viewsSelectionOptions;
         }
-        public void OnGet()
+
+        public async Task OnGetAsync()
         {
+            await LoadSelectionsAsync();
         }
+
         public async Task<IActionResult> OnPostSearchAsync(SelectOptionsData Selectsearch)
         {
+            await LoadSelectionsAsync();
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Please select all required fields.";
@@ -41,6 +52,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
         }
         public async Task<IActionResult> OnPostRegisterAsync(SelectOptionsDataForTermReg termRegBatch)
         {
+            await LoadSelectionsAsync();
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Please select all required fields.";
@@ -70,6 +82,15 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.termly_registeration
             }
             TempData["Success"] = $"Students registered successfully. Success: {successCount}, Failure: {failureCount}";
             return RedirectToPage("index");
+        }
+
+        private async Task LoadSelectionsAsync()
+        {
+            Selections.SchoolClasses = await _viewsSelectionOptions.GetSchoolClassesForDropdownAsync();
+            Selections.AcademicSession = await _viewsSelectionOptions.GetSessionsForDropdownAsync();
+            Selections.SubClass = await _viewsSelectionOptions.GetSchoolSubclassesForDropdownAsync();
+            Selections.Terms = Enum.GetValues<GetEnums.Term>()
+                .Select(t => new SelectListItem { Value = ((int)t).ToString(), Text = t.ToString() });
         }
     }
 }

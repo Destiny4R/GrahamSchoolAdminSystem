@@ -2,8 +2,13 @@
 @model GrahamSchoolAdminSystemWeb.Pages.admin.positions.IndexModel
 @{
     ViewData["Title"] = "Position Management";
+    await Permissions.InitializeAsync(User);
 }
-
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link href="~/lib/sweetalert2/sweetalert2.css" rel="stylesheet" />
+}
 <!-- Success/Error Messages -->
 @if (TempData["Success"] != null)
 {
@@ -25,24 +30,25 @@
 
 <!-- Page Header -->
 <div class="page-header mb-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h2 class="page-title mb-1">
-                <i class="bi bi-briefcase-fill me-2"></i>Position Management
-            </h2>
-            <p class="text-muted mb-0">Create and manage organizational positions (job titles)</p>
-        </div>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPositionModal" onclick="resetForm()">
-            <i class="bi bi-plus-circle-fill me-2"></i>Add Position
-        </button>
+    <div>
+        <h2 class="page-title mb-1 text-white">
+            <i class="bi bi-briefcase-fill me-2"></i>Position Management
+        </h2>
+        <p class="text-white mb-0">Create and manage organizational positions (job titles)</p>
     </div>
+    @if (Permissions.CanCreate)
+    {
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPositionModal" onclick="resetForm()">
+        <i class="bi bi-plus-circle-fill me-2"></i>Add Position
+    </button>
+    }
 </div>
 
 <!-- Info Alert -->
 <div class="alert alert-info alert-dismissible fade show p-2" role="alert">
     <i class="bi bi-info-circle-fill me-2"></i>
-    <strong>Note:</strong> Positions represent job titles only (e.g., "Principal", "Teacher", "Accountant"). 
-    For security permissions, assign roles to users via <a href="/admin/roles/userroles" class="alert-link">User Roles Management</a>.
+    <strong>Note:</strong> Positions represent job titles (e.g., "Principal", "Teacher", "Accountant"). 
+    Use the <strong>"Manage Roles"</strong> button to assign roles and permissions to each position.
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
@@ -91,14 +97,49 @@
                                     <small class="text-muted">@position.CreatedDate.ToString("MMM dd, yyyy")</small>
                                 </td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-primary me-1" 
-                                            onclick="editPosition(@position.Id)">
-                                        <i class="bi bi-pencil-fill me-1"></i>Edit
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                            onclick="deletePosition(@position.Id, '@position.Name')">
-                                        <i class="bi bi-trash-fill me-1"></i>Delete
-                                    </button>
+                                    @if (position.Name == SD.Positions.PRINCIPAL)
+                                    {
+                                        <span class="badge bg-warning text-dark" title="System-protected position"><i class="bi bi-lock-fill me-1"></i>Protected</span>
+                                    }
+                                    else
+                                    {
+                                    <div class="">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            @if (Permissions.CanDelete)
+                                            {
+                                            <li>
+                                                <button type="button" class="dropdown-item"
+                                                        onclick="deletePosition(@position.Id, '@position.Name')">
+                                                    <i class="bi bi-trash-fill me-1"></i>Delete
+                                                </button>
+                                            </li>
+                                            }
+                                            @if (Permissions.CanEdit)
+                                            {
+                                            <li>
+                                                <button type="button" class="dropdown-item"
+                                                        onclick="editPosition(@position.Id)">
+                                                    <i class="bi bi-pencil-fill me-1"></i>Edit
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item" onclick="manageRoles(@position.Id, '@position.Name')">
+                                                    <i class="bi bi-shield-lock-fill me-1"></i>Manage Roles
+                                                </button>
+                                            </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                    }
+
+
+
+
+
                                 </td>
                             </tr>
                         }
@@ -118,6 +159,8 @@
 </div>
 
 <!-- Add Position Modal -->
+@if (Permissions.CanCreate)
+{
 <div class="modal fade" id="addPositionModal" tabindex="-1" aria-labelledby="addPositionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -130,7 +173,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="PositionId" name="Position.Id" value="0" />
-                    
+
                     <div class="mb-3">
                         <label for="PositionName" class="form-label">Position Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="PositionName" name="Position.Name" 
@@ -146,7 +189,7 @@
 
                     <div class="alert alert-light border" role="alert">
                         <i class="bi bi-lightbulb-fill text-warning me-2"></i>
-                        <small>Positions are job titles only. To grant permissions, assign roles to users in User Roles Management.</small>
+                        <small>After creating a position, use "Manage Roles" to assign roles and their permissions.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -161,14 +204,59 @@
         </div>
     </div>
 </div>
+}
+
+<!-- Manage Roles Modal -->
+<div class="modal fade" id="manageRolesModal" tabindex="-1" aria-labelledby="manageRolesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageRolesModalLabel">
+                    <i class="bi bi-shield-lock-fill me-2"></i>Manage Roles & Permissions
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="roleAssignPositionId" value="0" />
+
+                <div class="mb-3">
+                    <h6 class="fw-bold">
+                        <i class="bi bi-briefcase-fill me-1"></i>Position: <span id="roleAssignPositionName" class="text-primary"></span>
+                    </h6>
+                    <small class="text-muted">Assign roles to this position and configure which permissions each role has.</small>
+                </div>
+
+                <div id="rolesLoadingSpinner" class="text-center py-4" style="display:none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading roles...</p>
+                </div>
+
+                <div id="rolesContainer">
+                    <!-- Roles will be loaded here dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="btnSaveRoles" onclick="saveRoleAssignments()">
+                    <i class="bi bi-check-circle me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_DataTablesScriptsFiles" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
     <script>
+        var allPermissions = [];
+
         $(document).ready(function() {
-            // Initialize DataTable
             $('#positionsTable').DataTable({
                 responsive: true,
                 pageLength: 25,
@@ -199,21 +287,11 @@
                         $('#addPositionModalLabel').html('<i class="bi bi-pencil-fill me-2"></i>Edit Position');
                         $('#addPositionModal').modal('show');
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: response.message || 'Failed to load position data',
-                            confirmButtonColor: '#0b1437'
-                        });
+                        Swal.fire({ icon: 'error', title: 'Error', text: response.message || 'Failed to load position data', confirmButtonColor: '#0b1437' });
                     }
                 },
                 error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to load position data',
-                        confirmButtonColor: '#0b1437'
-                    });
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load position data', confirmButtonColor: '#0b1437' });
                 }
             });
         }
@@ -233,38 +311,202 @@
                     $.ajax({
                         url: '?handler=Delete',
                         type: 'POST',
-                        data: {
-                            id: id,
-                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                        },
+                        data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
                         success: function(response) {
                             if (response.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted!',
-                                    text: response.message,
-                                    confirmButtonColor: '#0b1437'
-                                }).then(() => {
-                                    location.reload();
-                                });
+                                Swal.fire({ icon: 'success', title: 'Deleted!', text: response.message, confirmButtonColor: '#0b1437' }).then(() => { location.reload(); });
                             } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Cannot Delete',
-                                    text: response.message,
-                                    confirmButtonColor: '#0b1437'
-                                });
+                                Swal.fire({ icon: 'error', title: 'Cannot Delete', text: response.message, confirmButtonColor: '#0b1437' });
                             }
                         },
                         error: function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Failed to delete position',
-                                confirmButtonColor: '#0b1437'
-                            });
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to delete position', confirmButtonColor: '#0b1437' });
                         }
                     });
+                }
+            });
+        }
+
+        function manageRoles(positionId, positionName) {
+            $('#roleAssignPositionId').val(positionId);
+            $('#roleAssignPositionName').text(positionName);
+            $('#rolesContainer').html('');
+            $('#rolesLoadingSpinner').show();
+            $('#manageRolesModal').modal('show');
+
+            $.ajax({
+                url: '?handler=RoleAssignment&id=' + positionId,
+                type: 'GET',
+                success: function(response) {
+                    $('#rolesLoadingSpinner').hide();
+                    if (response.success) {
+                        allPermissions = response.data.allPermissions || [];
+                        renderRoleCards(response.data.availableRoles);
+                    } else {
+                        $('#rolesContainer').html(
+                            '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>' +
+                            (response.message || 'Failed to load roles') + '</div>'
+                        );
+                    }
+                },
+                error: function() {
+                    $('#rolesLoadingSpinner').hide();
+                    $('#rolesContainer').html(
+                        '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Failed to load role data</div>'
+                    );
+                }
+            });
+        }
+
+        function renderRoleCards(roles) {
+            if (!roles || roles.length === 0) {
+                $('#rolesContainer').html(
+                    '<div class="alert alert-warning"><i class="bi bi-info-circle-fill me-2"></i>No roles available. Please seed roles first.</div>'
+                );
+                return;
+            }
+
+            var html = '';
+            roles.forEach(function(role) {
+                var checkedAttr = role.isAssigned ? 'checked' : '';
+                var assignedPermIds = role.permissionIds || [];
+
+                // Build permission checkboxes
+                var permHtml = '';
+                allPermissions.forEach(function(perm) {
+                    var permChecked = assignedPermIds.indexOf(perm.id) >= 0 ? 'checked' : '';
+                    var badgeClass = getPermissionBadgeClass(perm.name);
+                    var iconClass = getPermissionIcon(perm.name);
+                    permHtml += '<div class="form-check form-check-inline mb-1">';
+                    permHtml += '<input class="form-check-input perm-checkbox" type="checkbox" id="perm_' + role.roleId + '_' + perm.id + '" ';
+                    permHtml += 'data-role-id="' + role.roleId + '" data-perm-id="' + perm.id + '" ' + permChecked + '>';
+                    permHtml += '<label class="form-check-label" for="perm_' + role.roleId + '_' + perm.id + '">';
+                    permHtml += '<span class="badge ' + badgeClass + '"><i class="bi ' + iconClass + ' me-1"></i>' + perm.name + '</span>';
+                    permHtml += '</label></div>';
+                });
+
+                if (allPermissions.length === 0) {
+                    permHtml = '<span class="text-muted fst-italic"><small>No permissions available</small></span>';
+                }
+
+                html += '<div class="card role-card mb-3 ' + (role.isAssigned ? 'border-success' : '') + '" id="roleCard_' + role.roleId + '">';
+                html += '<div class="card-body p-3">';
+                html += '<div class="d-flex align-items-center justify-content-between mb-3">';
+                html += '<div class="form-check form-switch">';
+                html += '<input class="form-check-input role-checkbox" type="checkbox" id="role_' + role.roleId + '" value="' + role.roleId + '" ' + checkedAttr + ' onchange="toggleRoleCard(\'' + role.roleId + '\')">';
+                html += '<label class="form-check-label fw-bold" for="role_' + role.roleId + '">' + getRoleBadge(role.roleName) + ' <small class="text-muted fw-normal ms-1">Assign to position</small></label>';
+                html += '</div></div>';
+                html += '<div class="permissions-section">';
+                html += '<div class="d-flex align-items-center mb-2">';
+                html += '<small class="text-muted fw-bold me-2"><i class="bi bi-key-fill me-1"></i>Permissions:</small>';
+                html += '<button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1 me-1" onclick="toggleAllPerms(\'' + role.roleId + '\', true)" title="Select all"><small>All</small></button>';
+                html += '<button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" onclick="toggleAllPerms(\'' + role.roleId + '\', false)" title="Clear all"><small>None</small></button>';
+                html += '</div>';
+                html += '<div class="ps-1">' + permHtml + '</div>';
+                html += '</div>';
+                html += '</div></div>';
+            });
+
+            $('#rolesContainer').html(html);
+        }
+
+        function toggleRoleCard(roleId) {
+            var isChecked = $('#role_' + roleId).is(':checked');
+            var card = $('#roleCard_' + roleId);
+            if (isChecked) {
+                card.addClass('border-success');
+            } else {
+                card.removeClass('border-success');
+            }
+        }
+
+        function toggleAllPerms(roleId, selectAll) {
+            $('input.perm-checkbox[data-role-id="' + roleId + '"]').prop('checked', selectAll);
+        }
+
+        function getRoleBadge(roleName) {
+            var badgeClass = 'bg-secondary';
+            if (roleName === 'Admin') badgeClass = 'bg-danger';
+            else if (roleName === 'Accountant') badgeClass = 'bg-warning text-dark';
+            else if (roleName === 'Cashier') badgeClass = 'bg-success';
+            return '<span class="badge ' + badgeClass + ' fs-6">' + roleName + '</span>';
+        }
+
+        function getPermissionBadgeClass(perm) {
+            switch (perm.toLowerCase()) {
+                case 'create': return 'bg-success';
+                case 'edit': return 'bg-primary';
+                case 'delete': return 'bg-danger';
+                case 'view': return 'bg-info text-dark';
+                case 'report': return 'bg-warning text-dark';
+                default: return 'bg-secondary';
+            }
+        }
+
+        function getPermissionIcon(perm) {
+            switch (perm.toLowerCase()) {
+                case 'create': return 'bi-plus-circle';
+                case 'edit': return 'bi-pencil';
+                case 'delete': return 'bi-trash';
+                case 'view': return 'bi-eye';
+                case 'report': return 'bi-file-earmark-bar-graph';
+                default: return 'bi-shield';
+            }
+        }
+
+        function saveRoleAssignments() {
+            var positionId = parseInt($('#roleAssignPositionId').val());
+
+            // Collect selected role IDs
+            var selectedRoleIds = [];
+            $('.role-checkbox:checked').each(function() {
+                selectedRoleIds.push($(this).val());
+            });
+
+            // Collect permission assignments per role (for ALL roles, not just selected ones)
+            var rolePermissions = [];
+            $('.role-checkbox').each(function() {
+                var roleId = $(this).val();
+                var permIds = [];
+                $('input.perm-checkbox[data-role-id="' + roleId + '"]:checked').each(function() {
+                    permIds.push(parseInt($(this).attr('data-perm-id')));
+                });
+                rolePermissions.push({ roleId: roleId, permissionIds: permIds });
+            });
+
+            $('#btnSaveRoles').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Saving...');
+
+            $.ajax({
+                url: '?handler=AssignRoles',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                data: JSON.stringify({
+                    positionId: positionId,
+                    selectedRoleIds: selectedRoleIds,
+                    rolePermissions: rolePermissions
+                }),
+                success: function(response) {
+                    $('#btnSaveRoles').prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Save Changes');
+                    if (response.success) {
+                        $('#manageRolesModal').modal('hide');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Updated!',
+                            text: response.message,
+                            confirmButtonColor: '#0b1437'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: response.message || 'Failed to save', confirmButtonColor: '#0b1437' });
+                    }
+                },
+                error: function() {
+                    $('#btnSaveRoles').prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Save Changes');
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save changes', confirmButtonColor: '#0b1437' });
                 }
             });
         }
@@ -314,5 +556,43 @@
     .btn-outline-danger:hover {
         background-color: #dc3545;
         border-color: #dc3545;
+    }
+
+    .role-card {
+        transition: all 0.2s ease;
+        border: 2px solid #dee2e6;
+    }
+
+    .role-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .role-card.border-success {
+        border-color: #198754 !important;
+        background-color: rgba(25, 135, 84, 0.03);
+    }
+
+    .role-checkbox:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    .perm-checkbox:checked {
+        background-color: #0b1437;
+        border-color: #0b1437;
+    }
+
+    .permissions-section {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .form-check-inline {
+        margin-right: 0.5rem;
+    }
+
+    .form-check-inline .badge {
+        cursor: pointer;
     }
 </style>

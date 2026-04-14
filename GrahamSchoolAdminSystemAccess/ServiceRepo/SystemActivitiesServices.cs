@@ -261,16 +261,6 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     return (false, "Students are registered in this class. Remove them before proceeding");
                 }
 
-                if (await _context.TermlyFeesSetups.AnyAsync(x => x.SchoolClassId == id))
-                {
-                    return (false, "Fees have been set up for this class. פעולה cannot proceed");
-                }
-
-                if (await _context.PTAFeesSetups.AnyAsync(x => x.SchoolClassId == id))
-                {
-                    return (false, "PTA fees have been set up for this class. You cannot proceed");
-                }
-
                 var entity = await _context.SchoolClasses.FirstOrDefaultAsync(k => k.Id == id);
 
                 if (entity == null)
@@ -329,7 +319,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 {
                     id = room.Id,
                     name = room.Name,
-                    createdate = room.CreatedDate,
+                    createdate = room.CreatedDate                    
                 }).ToListAsync();
 
 

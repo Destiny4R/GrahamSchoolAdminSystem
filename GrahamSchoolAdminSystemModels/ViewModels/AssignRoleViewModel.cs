@@ -20,6 +20,8 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
         public List<RoleCheckboxViewModel> AvailableRoles { get; set; } = new List<RoleCheckboxViewModel>();
 
         public List<string> AssignedRoles { get; set; } = new List<string>();
+
+        public List<PermissionViewModel> AllPermissions { get; set; } = new List<PermissionViewModel>();
     }
 
     public class RoleCheckboxViewModel
@@ -28,5 +30,12 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
         public string RoleName { get; set; }
         public bool IsAssigned { get; set; }
         public List<string> Permissions { get; set; } = new List<string>();
+        public List<int> PermissionIds { get; set; } = new List<int>();
+    }
+
+    public class PermissionViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 }

@@ -82,7 +82,6 @@ namespace GrahamSchoolAdminSystemWeb.Pages.account
                     ErrorMessage = "Invalid email or password.";
                     return Page();
                 }
-
                 // Check if user account is enabled
                 if (user.LockoutEnabled && await _userManager.IsLockedOutAsync(user))
                 {

@@ -1,3 +1,4 @@
+using GrahamSchoolAdminSystemAccess;
 using GrahamSchoolAdminSystemWeb.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -9,6 +10,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.roles
     /// This page requires users to have the "View" permission
     /// </summary>
     [Authorize]
+    [RequireRole(SD.Roles.ADMIN)]
     [RequirePermission("View")]
     public class PermissionsExampleModel : PageModel
     {

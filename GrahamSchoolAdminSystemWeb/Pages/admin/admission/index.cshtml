@@ -3,6 +3,7 @@
 @using static GrahamSchoolAdminSystemModels.Models.GetEnums;
 @{
     ViewData["Title"] = "Student Admission - Graham School Admin System";
+    await Permissions.InitializeAsync(User);
 }
 
 @section Sheets{
@@ -12,7 +13,7 @@
     <partial name="_DatatablesSheetFiles" />
 }
 
-<div class="page-header">
+<div class="page-header container">
     <div>
         <h1>
             <i class="bi bi-person-plus-fill"></i> Student Admission
@@ -20,9 +21,20 @@
         <p class="text-white-50">Manage student registrations and account statuses</p>
     </div>
     <div class="header-actions">
+        @if (Permissions.CanCreate)
+        {
+        <form enctype="multipart/form-data" method="post" asp-page-handler="DownloadExcel">
+            <button type="submit" class="btn btn-primary" >
+                <i class="bi bi-cloud-arrow-down me-2"></i>Download
+            </button>
+        </form>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#excelUploadModal">
+            <i class="bi bi-file-earmark-spreadsheet me-2"></i>Add Excel
+        </button>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#studentModal" onclick="resetStudentForm()">
             <i class="bi bi-plus-circle me-2"></i>Add Student
         </button>
+        }
     </div>
 </div>
 
@@ -49,12 +61,12 @@
 
     <!-- DataTable Container -->
     <div class="datatable-container">
-        <table id="studentsTable" class="table table-hover table-sm">
+        <table id="studentsTable" class="table table-hover table-striped table-sm table-bordered" style="font-family:'Playfair Display', serif;">
             <thead>
                 <tr>
                     <th class="col-1">#</th>
                     <th class="col-3">Full Name</th>
-                    <th class="col-2">Email</th>
+                    <th class="col-2">Admission Number</th>
                     <th class="col-2">Gender</th>
                     <th class="col-2">Status</th>
                     <th class="col-2">Created Date</th>
@@ -68,6 +80,8 @@
 </div>
 
 <!-- Add/Edit Modal -->
+@if (Permissions.CanCreate || Permissions.CanEdit)
+{
 <div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -80,7 +94,7 @@
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post">
+            <form method="post" asp-page-handler="CreateUpdate">
                 <div class="modal-body">
                     <input type="hidden" asp-for="StudentModel.Id" id="studentId" />
 
@@ -142,12 +156,50 @@
         </div>
     </div>
 </div>
+}
+
+<!-- Modal -->
+@if (Permissions.CanCreate)
+{
+<div class="modal fade" id="excelUploadModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="excelUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+            <h1 class="modal-title fs-5" id="excelUploadModalLabel">Add Student With Excel</h1>
+            <small>Add student information using an Excel file</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" enctype="multipart/form-data" asp-page-handler="UploadExcel">
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="excelFile" class="form-label">Select Excel file</label>
+                    <input class="form-control" type="file" id="excelFile" name="ExcelFile" accept=".xlsx, .xls" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+  </div>
+</div>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
     <script src="~/lib/jquery.blockui/jquery.blockui.js"></script>
     <partial name="_DatatablesScriptsFiles" />
+    <script>
+        window.userPermissions = {
+            canCreate: @Json.Serialize(Permissions.CanCreate),
+            canEdit: @Json.Serialize(Permissions.CanEdit),
+            canDelete: @Json.Serialize(Permissions.CanDelete)
+        };
+    </script>
     <script src="~/js/appmain.js" asp-append-version="true"></script>
 }
 

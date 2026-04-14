@@ -1,5 +1,6 @@
 using GrahamSchoolAdminSystemModels.Models;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -20,6 +21,8 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
         Task<(bool Succeeded, string Message, object Data)> CreateStudentAsync(StudentViewModel model);
 
         Task<(bool Succeeded, string Message)> UpdateStudentAsync(StudentViewModel model);
+
+        Task<(bool Succeeded, string Message, List<StudentImportResult> Results)> ImportStudentsFromExcelAsync(IFormFile excelFile);
 
         Task<(bool Succeeded, string Message)> DeleteStudentAsync(int studentId);
 

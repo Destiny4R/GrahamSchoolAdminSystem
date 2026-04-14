@@ -1,16 +1,22 @@
-﻿using GrahamSchoolAdminSystemAccess.IServiceRepo;
+﻿using GrahamSchoolAdminSystemAccess;
+using GrahamSchoolAdminSystemAccess.IServiceRepo;
 using GrahamSchoolAdminSystemAccess.ServiceRepo;
 using GrahamSchoolAdminSystemModels.DTOs;
 using GrahamSchoolAdminSystemModels.Models;
 using GrahamSchoolAdminSystemModels.ViewModels;
+using GrahamSchoolAdminSystemWeb.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
+using System.Text.Json;
+using static GrahamSchoolAdminSystemModels.Models.GetEnums;
 
 namespace GrahamSchoolAdminSystemWeb.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/v1")]
     public class v1Controller : Controller
@@ -20,19 +26,28 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IPermissionService _permissionService;
+        private readonly IViewsSelectionOptions _viewsSelection;
+        private readonly IWebHostEnvironment _env;
+        private readonly IHubContext<PaymentNotificationHub> _hubContext;
 
         public v1Controller(
             IUnitOfWork unitOfWork, 
             ILogger<v1Controller> logger,
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            IPermissionService permissionService)
+            IPermissionService permissionService,
+            IViewsSelectionOptions viewsSelection,
+            IWebHostEnvironment env,
+            IHubContext<PaymentNotificationHub> hubContext)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _signInManager = signInManager;
             _userManager = userManager;
             _permissionService = permissionService;
+            _viewsSelection = viewsSelection;
+            _env = env;
+            _hubContext = hubContext;
         }
 
 
@@ -397,183 +412,6 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
 
         #endregion
 
-        #region Fees Setup
-
-        /// GET: api/v1/feessetup/selections - Get fees setup dropdown selections
-        /// </summary>
-        [HttpGet("feessetup/selections")]
-        public async Task<IActionResult> GetFeesSetupSelections()
-        {
-            try
-            {
-                var selections = await _unitOfWork.FinanceServices.GetFeesSetupSelectionsAsync();
-                return Json(new { success = true, data = selections });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading fees setup selections");
-                return Json(new { success = false, message = "Error loading selections" });
-            }
-        }
-
-        /// <summary>
-        /// POST: api/v1/feessetup/create - Create fees setup
-        /// </summary>
-        [HttpPost("feessetup/create")]
-        public async Task<IActionResult> CreateFeesSetup([FromBody] FeesSetupViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid form data" });
-
-            try
-            {
-                var result = await _unitOfWork.FinanceServices.CreateFeesSetupAsync(model);
-
-                if (result.Succeeded)
-                {
-                    await _unitOfWork.LogService.LogUserActionAsync(
-                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                        userName: User.Identity?.Name,
-                        action: "Create",
-                        entityType: "FeesSetup",
-                        entityId: result.Data.ToString(),
-                        message: $"Fees setup created - Amount: {model.Amount}, Term: {model.Term}",
-                        ipAddress: GetClientIpAddress(),
-                        details: $"Class ID: {model.SchoolClassId}, Session ID: {model.SessionId}"
-                    );
-
-                    return Json(new { success = true, message = result.Message, id = result.Data });
-                }
-
-                return Json(new { success = false, message = result.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating fees setup");
-                await _unitOfWork.LogService.LogErrorAsync(
-                    subject: "Fees Setup Creation Error",
-                    message: "Error creating fees setup",
-                    details: ex.Message,
-                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                    ipAddress: GetClientIpAddress()
-                );
-
-                return Json(new { success = false, message = "Error creating fees setup" });
-            }
-        }
-
-        /// <summary>
-        /// GET: api/v1/feessetup/5 - Get fees setup by ID for editing
-        /// </summary>
-        [HttpGet("feessetup/{id}")]
-        public async Task<IActionResult> GetFeesSetup(int id)
-        {
-            try
-            {
-                var feesSetup = await _unitOfWork.FinanceServices.GetFeesSetupByIdAsync(id);
-                if (feesSetup == null)
-                    return Json(new { error = "Fees setup not found" });
-
-                return Json(new { success = true, data = feesSetup });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading fees setup");
-                return Json(new { error = "Error loading data" });
-            }
-        }
-
-        /// <summary>
-        /// PUT: api/v1/feessetup/update - Update fees setup
-        /// </summary>
-        [HttpPut("feessetup/update")]
-        public async Task<IActionResult> UpdateFeesSetup([FromBody] FeesSetupViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid form data" });
-
-            try
-            {
-                var result = await _unitOfWork.FinanceServices.UpdateFeesSetupAsync(model);
-
-                if (result.Succeeded)
-                {
-                    await _unitOfWork.LogService.LogUserActionAsync(
-                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                        userName: User.Identity?.Name,
-                        action: "Update",
-                        entityType: "FeesSetup",
-                        entityId: model.Id.ToString(),
-                        message: $"Fees setup updated - Amount: {model.Amount}, Term: {model.Term}",
-                        ipAddress: GetClientIpAddress(),
-                        details: $"Class ID: {model.SchoolClassId}, Session ID: {model.SessionId}"
-                    );
-
-                    return Json(new { success = true, message = result.Message });
-                }
-
-                return Json(new { success = false, message = result.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating fees setup");
-                await _unitOfWork.LogService.LogErrorAsync(
-                    subject: "Fees Setup Update Error",
-                    message: "Error updating fees setup",
-                    details: ex.Message,
-                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                    ipAddress: GetClientIpAddress()
-                );
-
-                return Json(new { success = false, message = "Error updating fees setup" });
-            }
-        }
-
-        /// <summary>
-        /// DELETE: api/v1/feessetup/5 - Delete fees setup (with SweetAlert2 confirmation)
-        /// </summary>
-        [HttpDelete]
-        public async Task<IActionResult> DeleteFeesSetup(int id)
-        {
-            try
-            {
-                var result = await _unitOfWork.FinanceServices.DeleteFeesSetupAsync(id);
-
-                if (result.Succeeded)
-                {
-                    await _unitOfWork.LogService.LogUserActionAsync(
-                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                        userName: User.Identity?.Name,
-                        action: "Delete",
-                        entityType: "FeesSetup",
-                        entityId: id.ToString(),
-                        message: "Fees setup deleted successfully",
-                        ipAddress: GetClientIpAddress(),
-                        details: $"Deleted fees setup with ID: {id}"
-                    );
-
-                    return Json(new { success = true, message = result.Message });
-                }
-
-                return Json(new { success = false, message = result.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting fees setup");
-                await _unitOfWork.LogService.LogErrorAsync(
-                    subject: "Fees Setup Delete Error",
-                    message: "Error deleting fees setup",
-                    details: ex.Message,
-                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                    ipAddress: GetClientIpAddress()
-                );
-
-                return Json(new { success = false, message = "Error deleting fees setup" });
-            }
-        }
-
-        #endregion
-
         #region Authentication
 
         /// <summary>
@@ -654,6 +492,7 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
         /// <summary>
         /// GET: api/v1/auth/session-status - Check if user session is valid
         /// </summary>
+        [AllowAnonymous]
         [HttpGet("auth/session-status")]
         public IActionResult GetSessionStatus()
         {
@@ -809,105 +648,931 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
             }
         }
 
-        #endregion
-
-        #region PTA FEES SET UP
-        [HttpGet("ptasetuppayment/{id}")]
-        public async Task<IActionResult> GetPTAFeesSetupById(int id)
+        [HttpPost("termregistration/batch-excel")]
+        public async Task<IActionResult> BatchRegisterFromExcel(
+            [FromForm] IFormFile excelFile,
+            [FromForm] int sessionId,
+            [FromForm] int term,
+            [FromForm] int schoolClassId,
+            [FromForm] int schoolSubclassId)
         {
             try
             {
-                var ptaFeesSetup = await _unitOfWork.FinanceServices.GetPTAFeesSetupByIdAsync(id);
-                if (ptaFeesSetup == null)
-                    return NotFound();
+                if (excelFile == null || excelFile.Length == 0)
+                    return Json(new { success = false, message = "Please upload an Excel file" });
 
-                return new JsonResult(ptaFeesSetup);
+                var extension = Path.GetExtension(excelFile.FileName).ToLowerInvariant();
+                if (extension != ".xlsx" && extension != ".xls")
+                    return Json(new { success = false, message = "Only .xlsx or .xls files are allowed" });
+
+                var regNumbers = new List<string>();
+                using (var stream = new MemoryStream())
+                {
+                    await excelFile.CopyToAsync(stream);
+                    stream.Position = 0;
+
+                    using var workbook = new ClosedXML.Excel.XLWorkbook(stream);
+                    var worksheet = workbook.Worksheets.First();
+                    var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 0;
+
+                    for (int row = 1; row <= lastRow; row++)
+                    {
+                        var cellValue = worksheet.Cell(row, 1).GetString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(cellValue))
+                        {
+                            regNumbers.Add(cellValue);
+                        }
+                    }
+                }
+
+                if (!regNumbers.Any())
+                    return Json(new { success = false, message = "No registration numbers found in the Excel file" });
+
+                int successCount = 0;
+                int failureCount = 0;
+                var errors = new List<string>();
+
+                foreach (var regNumber in regNumbers)
+                {
+                    var student = await _unitOfWork.StudentServices.GetStudentByIdAsync(regNumber);
+                    if (student == null)
+                    {
+                        failureCount++;
+                        errors.Add($"{regNumber} — Student not found");
+                        continue;
+                    }
+
+                    var registrationData = new TermRegistrationViewModel
+                    {
+                        StudentId = student.Id,
+                        Term = (GetEnums.Term)term,
+                        SessionId = sessionId,
+                        SchoolClassId = schoolClassId,
+                        SchoolSubclassId = schoolSubclassId
+                    };
+
+                    var result = await _unitOfWork.TermRegistrationServices.CreateStudentTermRegistrationAsync(registrationData);
+                    if (result.Succeeded)
+                    {
+                        successCount++;
+                    }
+                    else
+                    {
+                        failureCount++;
+                        errors.Add($"{regNumber} — {result.Message}");
+                    }
+                }
+
+                await _unitOfWork.LogService.LogUserActionAsync(
+                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    userName: User.Identity?.Name,
+                    action: "BatchRegisterExcel",
+                    entityType: "TermRegistration",
+                    entityId: "batch",
+                    message: $"Batch Excel registration: {successCount} success, {failureCount} failed out of {regNumbers.Count} total",
+                    ipAddress: GetClientIpAddress()
+                );
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Batch registration completed. {successCount} registered successfully, {failureCount} failed out of {regNumbers.Count} total.",
+                    successCount,
+                    failureCount,
+                    total = regNumbers.Count,
+                    errors
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving PTA fees setup");
-                return new JsonResult(new { error = ex.Message }) { StatusCode = 500 };
+                _logger.LogError(ex, "Error during batch Excel registration");
+                await _unitOfWork.LogService.LogErrorAsync(
+                    subject: "Batch Excel Registration Error",
+                    message: "Error during batch Excel registration",
+                    details: ex.Message,
+                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    ipAddress: GetClientIpAddress()
+                );
+
+                return Json(new { success = false, message = "An error occurred during batch registration" });
             }
         }
 
         #endregion
 
-        #region Other Payment Items
-        [HttpDelete("otherpaymentitems/{id}")]
-        public async Task<IActionResult> DeleteOtherPaymentItem(int id)
+        #region Payment Categories
+
+        [HttpPost("paymentcategories/create")]
+        public async Task<IActionResult> CreatePaymentCategory([FromBody] PaymentCategoryViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid form data" });
+
+            try
+            {
+                var result = await _unitOfWork.PaymentCategoryService.CreatePaymentCategoryAsync(model);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Create",
+                        entityType: "PaymentCategory",
+                        entityId: result.Data.ToString(),
+                        message: $"Payment category '{model.Name}' created",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message, id = result.Data });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating payment category");
+                return Json(new { success = false, message = "Error creating payment category" });
+            }
+        }
+
+        [HttpGet("paymentcategories/{id}")]
+        public async Task<IActionResult> GetPaymentCategory(int id)
         {
             try
             {
-                if (id < 1)
-                    return Json(new { success = false, message = "Invalid payment item" });
+                var category = await _unitOfWork.PaymentCategoryService.GetPaymentCategoryByIdAsync(id);
+                if (category == null)
+                    return Json(new { success = false, message = "Payment category not found" });
+                return Json(new { success = true, data = category });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading payment category");
+                return Json(new { success = false, message = "Error loading data" });
+            }
+        }
 
-                var result = await _unitOfWork.OtherPaymentServices.DeleteOtherItemAsync(id);
+        [HttpGet("paymentcategories/active")]
+        public async Task<IActionResult> GetActivePaymentCategories()
+        {
+            try
+            {
+                var categories = await _unitOfWork.PaymentCategoryService.GetActiveCategoriesAsync();
+                return Json(new { success = true, data = categories });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading active payment categories");
+                return Json(new { success = false, message = "Error loading data" });
+            }
+        }
+
+        [HttpPut("paymentcategories/update")]
+        public async Task<IActionResult> UpdatePaymentCategory([FromBody] PaymentCategoryViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid form data" });
+
+            try
+            {
+                var result = await _unitOfWork.PaymentCategoryService.UpdatePaymentCategoryAsync(model);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Update",
+                        entityType: "PaymentCategory",
+                        entityId: model.Id.ToString(),
+                        message: $"Payment category '{model.Name}' updated",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating payment category");
+                return Json(new { success = false, message = "Error updating payment category" });
+            }
+        }
+
+        [HttpDelete("paymentcategories/{id}")]
+        public async Task<IActionResult> DeletePaymentCategory(int id)
+        {
+            try
+            {
+                var result = await _unitOfWork.PaymentCategoryService.DeletePaymentCategoryAsync(id);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Delete",
+                        entityType: "PaymentCategory",
+                        entityId: id.ToString(),
+                        message: "Payment category deleted",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting payment category");
+                return Json(new { success = false, message = "Error deleting payment category" });
+            }
+        }
+
+        [HttpPost("paymentcategories/{id}/toggle")]
+        public async Task<IActionResult> TogglePaymentCategory(int id)
+        {
+            try
+            {
+                var result = await _unitOfWork.PaymentCategoryService.TogglePaymentCategoryAsync(id);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "ToggleActivation",
+                        entityType: "PaymentCategory",
+                        entityId: id.ToString(),
+                        message: $"Payment category activation toggled: {result.Message}",
+                        ipAddress: GetClientIpAddress(),
+                        details: $"Payment category ID: {id}"
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling payment category");
+                return Json(new { success = false, message = "Error toggling payment category" });
+            }
+        }
+
+        #endregion
+
+        #region Payment Items
+
+        [HttpPost("paymentitems/create")]
+        public async Task<IActionResult> CreatePaymentItem([FromBody] PaymentItemViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid form data" });
+
+            try
+            {
+                var result = await _unitOfWork.PaymentItemService.CreatePaymentItemAsync(model);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Create",
+                        entityType: "PaymentItem",
+                        entityId: result.Data.ToString(),
+                        message: $"Payment item '{model.Name}' created",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message, id = result.Data });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating payment item");
+                return Json(new { success = false, message = "Error creating payment item" });
+            }
+        }
+
+        [HttpGet("paymentitems/{id}")]
+        public async Task<IActionResult> GetPaymentItem(int id)
+        {
+            try
+            {
+                var item = await _unitOfWork.PaymentItemService.GetPaymentItemByIdAsync(id);
+                if (item == null)
+                    return Json(new { success = false, message = "Payment item not found" });
+                return Json(new { success = true, data = item });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading payment item");
+                return Json(new { success = false, message = "Error loading data" });
+            }
+        }
+
+        [HttpGet("paymentitems/active")]
+        public async Task<IActionResult> GetActivePaymentItems([FromQuery] int? categoryId = null)
+        {
+            try
+            {
+                var items = await _unitOfWork.PaymentItemService.GetActiveItemsAsync(categoryId);
+                return Json(new { success = true, data = items });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading active payment items");
+                return Json(new { success = false, message = "Error loading data" });
+            }
+        }
+
+        [HttpPut("paymentitems/update")]
+        public async Task<IActionResult> UpdatePaymentItem([FromBody] PaymentItemViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid form data" });
+
+            try
+            {
+                var result = await _unitOfWork.PaymentItemService.UpdatePaymentItemAsync(model);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Update",
+                        entityType: "PaymentItem",
+                        entityId: model.Id.ToString(),
+                        message: $"Payment item '{model.Name}' updated",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating payment item");
+                return Json(new { success = false, message = "Error updating payment item" });
+            }
+        }
+
+        [HttpDelete("paymentitems/{id}")]
+        public async Task<IActionResult> DeletePaymentItem(int id)
+        {
+            try
+            {
+                var result = await _unitOfWork.PaymentItemService.DeletePaymentItemAsync(id);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Delete",
+                        entityType: "PaymentItem",
+                        entityId: id.ToString(),
+                        message: "Payment item deleted",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting payment item");
+                return Json(new { success = false, message = "Error deleting payment item" });
+            }
+        }
+
+        [HttpPost("paymentitems/{id}/toggle")]
+        public async Task<IActionResult> TogglePaymentItem(int id)
+        {
+            try
+            {
+                var result = await _unitOfWork.PaymentItemService.TogglePaymentItemAsync(id);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "ToggleActivation",
+                        entityType: "PaymentItem",
+                        entityId: id.ToString(),
+                        message: $"Payment item activation toggled: {result.Message}",
+                        ipAddress: GetClientIpAddress(),
+                        details: $"Payment item ID: {id}"
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling payment item");
+                return Json(new { success = false, message = "Error toggling payment item" });
+            }
+        }
+
+        #endregion
+
+        #region Payment Setup
+
+        [HttpPost("paymentsetups/create")]
+        public async Task<IActionResult> CreatePaymentSetup([FromBody] PaymentSetupViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid form data" });
+
+            try
+            {
+                var result = await _unitOfWork.PaymentSetupService.CreatePaymentSetupAsync(model);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Create",
+                        entityType: "PaymentSetup",
+                        entityId: result.Data.ToString(),
+                        message: $"Payment setup created for item {model.PaymentItemId}",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message, id = result.Data });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating payment setup");
+                return Json(new { success = false, message = "Error creating payment setup" });
+            }
+        }
+
+        [HttpGet("paymentsetups/{id}")]
+        public async Task<IActionResult> GetPaymentSetup(int id)
+        {
+            try
+            {
+                var setup = await _unitOfWork.PaymentSetupService.GetPaymentSetupByIdAsync(id);
+                if (setup == null)
+                    return Json(new { success = false, message = "Payment setup not found" });
+                return Json(new { success = true, data = setup });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading payment setup");
+                return Json(new { success = false, message = "Error loading data" });
+            }
+        }
+
+        [HttpPut("paymentsetups/update")]
+        public async Task<IActionResult> UpdatePaymentSetup([FromBody] PaymentSetupViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid form data" });
+
+            try
+            {
+                var result = await _unitOfWork.PaymentSetupService.UpdatePaymentSetupAsync(model);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Update",
+                        entityType: "PaymentSetup",
+                        entityId: model.Id.ToString(),
+                        message: $"Payment setup updated",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating payment setup");
+                return Json(new { success = false, message = "Error updating payment setup" });
+            }
+        }
+
+        [HttpDelete("paymentsetups/{id}")]
+        public async Task<IActionResult> DeletePaymentSetup(int id)
+        {
+            try
+            {
+                var result = await _unitOfWork.PaymentSetupService.DeletePaymentSetupAsync(id);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Delete",
+                        entityType: "PaymentSetup",
+                        entityId: id.ToString(),
+                        message: "Payment setup deleted",
+                        ipAddress: GetClientIpAddress()
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting payment setup");
+                return Json(new { success = false, message = "Error deleting payment setup" });
+            }
+        }
+
+        [HttpPost("paymentsetups/{id}/toggle")]
+        public async Task<IActionResult> TogglePaymentSetup(int id)
+        {
+            try
+            {
+                var result = await _unitOfWork.PaymentSetupService.TogglePaymentSetupAsync(id);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "ToggleActivation",
+                        entityType: "PaymentSetup",
+                        entityId: id.ToString(),
+                        message: $"Payment setup activation toggled: {result.Message}",
+                        ipAddress: GetClientIpAddress(),
+                        details: $"Payment setup ID: {id}"
+                    );
+                    return Json(new { success = true, message = result.Message });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling payment setup");
+                return Json(new { success = false, message = "Error toggling payment setup" });
+            }
+        }
+
+        #endregion
+
+        #region Student Payments
+
+        [HttpGet("studentpayments/payable-items/{termRegId}")]
+        public async Task<IActionResult> GetPayableItems(int termRegId)
+        {
+            try
+            {
+                var result = await _unitOfWork.StudentPaymentService.GetPayableItemsAsync(termRegId);
+                if (result == null)
+                    return Json(new { success = false, message = "Term registration not found" });
+                return Json(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading payable items");
+                return Json(new { success = false, message = "Error loading payable items" });
+            }
+        }
+
+        [HttpPost("studentpayments/create")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateStudentPayment()
+        {
+            try
+            {
+                if (!int.TryParse(Request.Form["termRegistrationId"].FirstOrDefault(), out int termRegistrationId))
+                    return Json(new { success = false, message = "Invalid term registration ID" });
+
+                var narration = Request.Form["narration"].FirstOrDefault();
+                var itemsJson = Request.Form["items"].FirstOrDefault();
+                if (string.IsNullOrEmpty(itemsJson))
+                    return Json(new { success = false, message = "No payment items provided" });
+
+                var items = JsonSerializer.Deserialize<List<StudentPaymentItemVM>>(itemsJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                var model = new CreatePaymentViewModel
+                {
+                    TermRegistrationId = termRegistrationId,
+                    Narration = narration,
+                    Items = items ?? new()
+                };
+
+                // Handle evidence file upload
+                string? evidenceFilePath = null;
+                var evidenceFile = Request.Form.Files.GetFile("evidence");
+                if (evidenceFile != null)
+                {
+                    var validation = FileUploadHandler.ValidateFile(evidenceFile);
+                    if (!validation.IsValid)
+                        return Json(new { success = false, message = validation.ErrorMessage });
+
+                    var uploadPath = Path.Combine(_env.WebRootPath, "uploads", "payment-evidence");
+                    var processResult = FileUploadHandler.ProcessFile(evidenceFile, uploadPath);
+                    if (!processResult.Success)
+                        return Json(new { success = false, message = processResult.Message });
+
+                    evidenceFilePath = $"/uploads/payment-evidence/{processResult.FileName}";
+                }
+
+                var result = await _unitOfWork.StudentPaymentService.CreatePaymentAsync(model, evidenceFilePath);
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.LogService.LogUserActionAsync(
+                        userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                        userName: User.Identity?.Name,
+                        action: "Create",
+                        entityType: "StudentPayment",
+                        entityId: result.Data.ToString(),
+                        message: $"Student payment created for term registration {model.TermRegistrationId}",
+                        ipAddress: GetClientIpAddress(),
+                        details: $"Items: {model.Items.Count}, Total: {model.Items.Sum(i => i.AmountPaid)}"
+                    );
+
+                    // Broadcast real-time notification to Approvers group
+                    await _hubContext.Clients.Group("Approvers").SendAsync("NewPaymentReceived", new
+                    {
+                        paymentId = result.Data,
+                        amount = model.Items.Sum(i => i.AmountPaid),
+                        createdBy = User.Identity?.Name ?? "Unknown"
+                    });
+
+                    return Json(new { success = true, message = result.Message, id = result.Data });
+                }
+                return Json(new { success = false, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating student payment");
+                await _unitOfWork.LogService.LogErrorAsync(
+                    subject: "Student Payment Creation Error",
+                    message: "Error creating student payment",
+                    details: ex.Message,
+                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    ipAddress: GetClientIpAddress()
+                );
+                return Json(new { success = false, message = "Error creating student payment" });
+            }
+        }
+
+        [HttpPost("studentpayments/lookup")]
+        public async Task<IActionResult> LookupPayableItems([FromBody] PaymentLookupViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid form data" });
+
+            try
+            {
+                var result = await _unitOfWork.StudentPaymentService.LookupPayableItemsAsync(
+                    model.AdmissionNo, model.ClassId, model.CategoryId);
+
+                await _unitOfWork.LogService.LogUserActionAsync(
+                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    userName: User.Identity?.Name,
+                    action: "LookupPayableItems",
+                    entityType: "StudentPayment",
+                    entityId: model.AdmissionNo ?? "N/A",
+                    message: $"Looked up payable items for admission no '{model.AdmissionNo}'",
+                    ipAddress: GetClientIpAddress(),
+                    details: $"AdmissionNo: {model.AdmissionNo}, ClassId: {model.ClassId}, CategoryId: {model.CategoryId}, Found: {result.Succeeded}"
+                );
+
+                return Json(new { success = result.Succeeded, message = result.Message, data = result.Data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error looking up payable items");
+                return Json(new { success = false, message = "Error looking up payable items" });
+            }
+        }
+
+        [HttpGet("studentpayments/receipt/{id}")]
+        public async Task<IActionResult> GetPaymentReceipt(int id)
+        {
+            try
+            {
+                var receipt = await _unitOfWork.StudentPaymentService.GetReceiptAsync(id);
+                if (receipt == null)
+                    return Json(new { success = false, message = "Payment not found" });
+                return Json(new { success = true, data = receipt });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading payment receipt");
+                return Json(new { success = false, message = "Error loading receipt" });
+            }
+        }
+
+        [HttpPost("studentpayments/{id}/update-state")]
+        public async Task<IActionResult> UpdatePaymentState(int id, [FromBody] UpdatePaymentStateRequest request)
+        {
+            try
+            {
+                // Only users with REPORT permission can approve/reject/cancel payments
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !await _permissionService.UserHasPermissionAsync(userId, SD.Permissions.REPORT))
+                    return Json(new { success = false, message = "You do not have permission to perform this action" });
+
+                var state = (PaymentState)request.PaymentState;
+                var result = await _unitOfWork.StudentPaymentService.UpdatePaymentStateAsync(id, state, request.RejectMessage);
 
                 if (result.Succeeded)
                 {
                     await _unitOfWork.LogService.LogUserActionAsync(
                         userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
                         userName: User.Identity?.Name,
-                        action: "DeleteMultiple",
-                        entityType: "OtherPaymentItem",
+                        action: "UpdateState",
+                        entityType: "StudentPayment",
                         entityId: id.ToString(),
-                        message: $"Deleted other payment item with ID {id}",
-                        ipAddress: GetClientIpAddress()
+                        message: $"Payment state updated to {state}",
+                        ipAddress: GetClientIpAddress(),
+                        details: state == PaymentState.Rejected ? $"Reason: {request.RejectMessage}" : null
                     );
+
+                    await _hubContext.Clients.Group("Approvers").SendAsync("PaymentStateChanged", new
+                    {
+                        paymentId = id,
+                        newState = state.ToString(),
+                        updatedBy = User.Identity?.Name ?? "Unknown"
+                    });
 
                     return Json(new { success = true, message = result.Message });
                 }
-
                 return Json(new { success = false, message = result.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting other payment item");
-                await _unitOfWork.LogService.LogErrorAsync(
-                    subject: "Other Payment Item Delete Error",
-                    message: "Error deleting other payment item",
-                    details: ex.Message,
-                    userId: User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
-                    ipAddress: GetClientIpAddress()
-                );
-
-                return Json(new { success = false, message = "Error deleting other payment item" });
+                _logger.LogError(ex, "Error updating payment state");
+                return Json(new { success = false, message = "Error updating payment state" });
             }
         }
 
-        [HttpGet("othersetuppayment/{id}")]
-        public async Task<IActionResult> GetOtherFeesSetupById(int id)
+        [HttpGet("studentpayments/evidence-required")]
+        public IActionResult IsEvidenceRequired()
+        {
+            // This is checked server-side in CreatePaymentAsync;
+            // the client calls this to conditionally show the upload field
+            return Json(new { required = true });
+        }
+
+        [HttpGet("studentpayments/pending-notifications")]
+        public async Task<IActionResult> GetPendingPaymentNotifications()
         {
             try
             {
-                var otherFeesSetup = await _unitOfWork.OtherPaymentServices.GetOtherFeesSetUpByIdAsync(id);
-                if (otherFeesSetup == null)
-                    return NotFound();
+                var hasReportPerm = await _permissionService.UserHasPermissionAsync(User, SD.Permissions.REPORT);
+                if (!hasReportPerm)
+                    return Json(new { success = true, data = Array.Empty<object>(), count = 0 });
 
-                return new JsonResult(otherFeesSetup);
+                var notifications = await _unitOfWork.StudentPaymentService.GetPendingPaymentNotificationsAsync();
+                return Json(new { success = true, data = notifications, count = notifications.Count });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving other fees setup");
-                return new JsonResult(new { error = ex.Message }) { StatusCode = 500 };
+                _logger.LogError(ex, "Error loading pending payment notifications");
+                return Json(new { success = true, data = Array.Empty<object>(), count = 0 });
             }
         }
 
-        [HttpDelete("DeleteOtherFeesSetup/{id}")]
-        public async Task<IActionResult> DeleteOtherFeesSetupAsync(int id)
+        #endregion
+
+        #region Dropdown Helpers
+
+        [HttpGet("dropdown/sessions")]
+        public async Task<IActionResult> GetSessionsDropdown()
         {
             try
             {
-                var otherFeesSetup = await _unitOfWork.FinanceServices.DeleteOtherFeesSetupAsync(id);
-                if (otherFeesSetup == null)
-                    return new JsonResult(new { succeeded = false, message = "Unknown request" });
-
-                return new JsonResult(new { succeeded = otherFeesSetup.Succeeded, message = otherFeesSetup.Message });
+                var items = await _viewsSelection.GetSessionsForDropdownAsync();
+                var result = items.Select(i => new { id = i.Value, name = i.Text });
+                return Json(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving other fees setup");
-                return new JsonResult(new { succeeded = false, message = "An error occurred while processing this request" });
+                _logger.LogError(ex, "Error loading sessions dropdown");
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpGet("dropdown/classes")]
+        public async Task<IActionResult> GetClassesDropdown()
+        {
+            try
+            {
+                var items = await _viewsSelection.GetSchoolClassesForDropdownAsync();
+                var result = items.Select(i => new { id = i.Value, name = i.Text });
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading classes dropdown");
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpGet("dropdown/subclasses")]
+        public async Task<IActionResult> GetSubClassesDropdown()
+        {
+            try
+            {
+                var items = await _viewsSelection.GetSchoolSubclassesForDropdownAsync();
+                var result = items.Select(i => new { id = i.Value, name = i.Text });
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading sub-classes dropdown");
+                return Json(new List<object>());
+            }
+        }
+
+        #endregion
+
+        #region Dashboard
+
+        [HttpGet("dashboard/category-summary")]
+        public async Task<IActionResult> GetCategoryPaymentSummary()
+        {
+            try
+            {
+                var settings = await _unitOfWork.UsersServices.GetAppSettingsByUserIdAsync();
+                if (settings == null || settings.sessionId == 0 || settings.term == 0)
+                    return Ok(new { success = false, message = "App settings not configured" });
+
+                var data = await _unitOfWork.PaymentReportService.GetDashboardCategorySummaryAsync(settings.sessionId, settings.term);
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching category payment summary");
+                return Ok(new { success = false, message = "Error fetching data" });
+            }
+        }
+
+        [HttpGet("dashboard/item-summary")]
+        public async Task<IActionResult> GetItemPaymentSummary()
+        {
+            try
+            {
+                var settings = await _unitOfWork.UsersServices.GetAppSettingsByUserIdAsync();
+                if (settings == null || settings.sessionId == 0 || settings.term == 0)
+                    return Ok(new { success = false, message = "App settings not configured" });
+
+                var data = await _unitOfWork.PaymentReportService.GetDashboardItemSummaryAsync(settings.sessionId, settings.term);
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching item payment summary");
+                return Ok(new { success = false, message = "Error fetching data" });
+            }
+        }
+
+        [HttpGet("dashboard/category-trend")]
+        public async Task<IActionResult> GetCategoryPaymentTrend()
+        {
+            try
+            {
+                var data = await _unitOfWork.PaymentReportService.GetDashboardCategoryTrendAsync(10);
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching category payment trend");
+                return Ok(new { success = false, message = "Error fetching data" });
+            }
+        }
+
+        [HttpGet("dashboard/item-chart")]
+        public async Task<IActionResult> GetItemPaymentChart()
+        {
+            try
+            {
+                var settings = await _unitOfWork.UsersServices.GetAppSettingsByUserIdAsync();
+                if (settings == null || settings.sessionId == 0 || settings.term == 0)
+                    return Ok(new { success = false, message = "App settings not configured" });
+
+                var data = await _unitOfWork.PaymentReportService.GetDashboardItemChartAsync(settings.sessionId, settings.term);
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching item payment chart");
+                return Ok(new { success = false, message = "Error fetching data" });
+            }
+        }
+
+        [HttpGet("dashboard/term-registration-chart")]
+        public async Task<IActionResult> GetTermRegistrationChart()
+        {
+            try
+            {
+                var settings = await _unitOfWork.UsersServices.GetAppSettingsByUserIdAsync();
+                if (settings == null || settings.sessionId == 0)
+                    return Ok(new { success = false, message = "App settings not configured" });
+
+                var data = await _unitOfWork.PaymentReportService.GetDashboardTermRegistrationChartAsync(settings.sessionId);
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching term registration chart");
+                return Ok(new { success = false, message = "Error fetching data" });
             }
         }
 

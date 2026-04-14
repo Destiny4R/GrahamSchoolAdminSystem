@@ -1,390 +1,555 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="content-inner">
+@section Sheets {
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <style>
+        /* ── DASHBOARD LAYOUT ── */
+        .dash { display: flex; flex-direction: column; gap: 24px; padding-bottom: 32px; }
 
-    <!-- Welcome Banner + Quick Actions -->
-    <div class="row g-3 mb-3">
-        <div class="col-lg-8">
-            <div class="welcome-banner">
-                <div class="wb-title">Good Morning, Admin 👋</div>
-                <div class="wb-sub">Friday, 27 March 2026 · Term 2, Week 11</div>
-                <div class="wb-badge"><i class="bi bi-patch-check-fill"></i> All systems running normally</div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="panel h-100">
-                <div class="panel-head">
-                    <span class="panel-title">Quick Actions</span>
+        /* ── HERO BANNER ── */
+        .hero {
+            background: linear-gradient(135deg, #1a2b6d 0%, #0b1437 100%);
+            border-radius: 16px;
+            padding: 32px 36px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            right: -60px;
+            top: -60px;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(245,183,49,.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-greeting { font-size: .88rem; color: rgba(255,255,255,.55); margin-bottom: 4px; }
+        .hero-title { font-size: 1.6rem; font-weight: 700; letter-spacing: .3px; }
+        .hero-title i { color: #f5b731; }
+        .hero-context {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 10px;
+            background: rgba(255,255,255,.08);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: .78rem;
+            color: rgba(255,255,255,.7);
+        }
+        .hero-context .badge-ctx {
+            background: rgba(245,183,49,.2);
+            color: #f5b731;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 4px;
+        }
+
+        /* ── STAT CARDS ── */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .stat-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 22px 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(11,20,55,.06);
+            border: 1px solid rgba(11,20,55,.06);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(11,20,55,.1); }
+        .stat-card .stat-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 14px;
+        }
+        .stat-card .stat-label { font-size: .75rem; color: #6b7a99; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+        .stat-card .stat-value { font-size: 1.5rem; font-weight: 800; color: #0b1437; margin-top: 2px; }
+        .stat-card .stat-sub { font-size: .72rem; color: #8a94a6; margin-top: 4px; }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 100px; height: 100px;
+            border-radius: 0 14px 0 80px;
+            opacity: .06;
+        }
+        .stat-card.blue .stat-icon { background: rgba(79,200,244,.12); color: #4fc8f4; }
+        .stat-card.blue::before { background: #4fc8f4; }
+        .stat-card.green .stat-icon { background: rgba(61,217,172,.12); color: #3dd9ac; }
+        .stat-card.green::before { background: #3dd9ac; }
+        .stat-card.gold .stat-icon { background: rgba(245,183,49,.12); color: #f5b731; }
+        .stat-card.gold::before { background: #f5b731; }
+        .stat-card.rose .stat-icon { background: rgba(255,107,132,.12); color: #ff6b84; }
+        .stat-card.rose::before { background: #ff6b84; }
+
+        /* ── CHART PANELS ── */
+        .chart-panel {
+            background: #fff;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(11,20,55,.06);
+            border: 1px solid rgba(11,20,55,.06);
+        }
+        .chart-panel .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .chart-panel .panel-title { font-size: .95rem; font-weight: 700; color: #0b1437; }
+        .chart-panel .panel-subtitle { font-size: .72rem; color: #8a94a6; }
+        .chart-panel .panel-badge {
+            font-size: .68rem;
+            background: rgba(11,20,55,.06);
+            color: #6b7a99;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* ── SUMMARY TABLE ── */
+        .summary-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .summary-table th {
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #8a94a6;
+            padding: 10px 12px;
+            border-bottom: 2px solid #f0f2f8;
+            font-weight: 600;
+        }
+        .summary-table td {
+            padding: 12px;
+            font-size: .82rem;
+            color: #2d3748;
+            border-bottom: 1px solid #f5f6fa;
+        }
+        .summary-table tbody tr:hover { background: #f8f9fd; }
+        .summary-table .amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+        .summary-table .text-collected { color: #3dd9ac; }
+        .summary-table .text-outstanding { color: #ff6b84; }
+        .summary-table .cat-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: .7rem;
+            font-weight: 600;
+            background: rgba(79,200,244,.1);
+            color: #1a8abf;
+        }
+
+        /* ── CHART GRID LAYOUTS ── */
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .charts-full { display: grid; grid-template-columns: 1fr; gap: 20px; }
+
+        /* ── CONFIG WARNING ── */
+        .config-warning {
+            background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%);
+            border: 1px solid #ffc107;
+            border-radius: 14px;
+            padding: 28px 32px;
+            text-align: center;
+        }
+        .config-warning i { font-size: 2.4rem; color: #ffc107; }
+        .config-warning h4 { color: #856404; margin-top: 12px; }
+        .config-warning p { color: #856404; opacity: .8; }
+
+        /* ── LOADING SPINNERS ── */
+        .chart-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+            color: #8a94a6;
+        }
+
+        /* ── RESPONSIVE ── */
+        @@media (max-width: 1200px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @@media (max-width: 768px) {
+            .hero { padding: 24px 20px; }
+            .stat-grid { grid-template-columns: 1fr; }
+            .charts-row { grid-template-columns: 1fr; }
+        }
+    </style>
+}
+
+<div class="dash container">
+
+    <!-- ═══ HERO BANNER ═══ -->
+    <div class="hero">
+        <div>
+            <div class="hero-greeting">Welcome back, @Model.CurrentUser.FullName</div>
+            <h1 class="hero-title"><i class="bi bi-speedometer2 me-2"></i>Payment Dashboard</h1>
+            @if (!string.IsNullOrEmpty(Model.CurrentUser.PositionName))
+            {
+                <div style="font-size:.78rem;color:rgba(255,255,255,.45);margin-top:4px;">
+                    <i class="bi bi-briefcase-fill me-1"></i>@Model.CurrentUser.PositionName
+                    @if (Model.CurrentUser.Roles.Any())
+                    {
+                        <span style="margin-left:8px;">
+                            @foreach (var role in Model.CurrentUser.Roles)
+                            {
+                                <span class="badge" style="background:rgba(255,255,255,.15);font-size:.65rem;margin-left:4px;">@role</span>
+                            }
+                        </span>
+                    }
                 </div>
-                <div class="p-3">
-                    <div class="row g-2">
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-person-plus-fill"></i><span>Add Student</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-clipboard-plus-fill"></i><span>Mark Attendance</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-receipt-cutoff"></i><span>Record Fee</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-megaphone-fill"></i><span>New Notice</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-calendar-plus-fill"></i><span>Schedule Exam</span></a></div>
-                        <div class="col-4"><a href="#" class="qa-btn"><i class="bi bi-download"></i><span>Export Report</span></a></div>
-                    </div>
+            }
+            @if (Model.SettingsConfigured)
+            {
+                <div class="hero-context">
+                    <span><i class="bi bi-calendar3 me-1"></i>Session: <span class="badge-ctx">@Model.CurrentSessionName</span></span>
+                    <span><i class="bi bi-bookmark-fill me-1"></i>Term: <span class="badge-ctx">@Model.CurrentTermName</span></span>
                 </div>
-            </div>
+            }
         </div>
     </div>
 
-    <!-- Stat Cards -->
-    <div class="row g-3 mb-3">
-        <div class="col-6 col-md-3">
+    @if (!Model.SettingsConfigured)
+    {
+        <!-- ═══ NOT CONFIGURED ═══ -->
+        <div class="config-warning">
+            <i class="bi bi-gear-wide-connected"></i>
+            <h4>App Settings Not Configured</h4>
+            <p>Please configure the current academic session and term in
+                <a href="/admin/app-settings" class="fw-bold text-decoration-underline">App Settings</a>
+                to view the payment dashboard.
+            </p>
+        </div>
+    }
+    else
+    {
+        <!-- ═══ SUMMARY STAT CARDS ═══ -->
+        <div class="stat-grid">
             <div class="stat-card blue">
-                <div class="deco-circle"></div>
-                <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-                <div class="stat-value">1,284</div>
-                <div class="stat-label">Total Students</div>
-                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> +42 this term</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card gold">
-                <div class="deco-circle"></div>
-                <div class="stat-icon"><i class="bi bi-person-badge-fill"></i></div>
-                <div class="stat-value">86</div>
-                <div class="stat-label">Teaching Staff</div>
-                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> +4 new hires</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card mint">
-                <div class="deco-circle"></div>
-                <div class="stat-icon"><i class="bi bi-building-fill"></i></div>
-                <div class="stat-value">38</div>
-                <div class="stat-label">Active Classes</div>
-                <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> 2 added</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card rose">
-                <div class="deco-circle"></div>
                 <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
-                <div class="stat-value">₦4.2M</div>
-                <div class="stat-label">Fees Collected</div>
-                <div class="stat-change down"><i class="bi bi-arrow-down-short"></i> 12% pending</div>
+                <div class="stat-label">Total Expected</div>
+                <div class="stat-value">₦@Model.TotalExpected.ToString("N0")</div>
+                <div class="stat-sub">@Model.CurrentTermName Term, @Model.CurrentSessionName</div>
             </div>
-        </div>
-    </div>
-
-    <!-- Attendance Overview + Subject Performance -->
-    <div class="row g-3 mb-3">
-        <!-- Attendance Chart -->
-        <div class="col-lg-5">
-            <div class="panel h-100">
-                <div class="panel-head">
-                    <span class="panel-title">Weekly Attendance</span>
-                    <a href="#" class="panel-action">View Full →</a>
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="bi bi-check2-circle"></i></div>
+                <div class="stat-label">Total Collected</div>
+                <div class="stat-value">₦@Model.TotalCollected.ToString("N0")</div>
+                <div class="stat-sub">
+                    @{
+                        var pct = Model.TotalExpected > 0 ? (Model.TotalCollected / Model.TotalExpected * 100) : 0;
+                    }
+                    <span style="color:#3dd9ac;font-weight:700;">@pct.ToString("N1")%</span> collection rate
                 </div>
-                <div class="p-4">
-                    <div class="d-flex align-items-end justify-content-between mb-3">
-                        <div>
-                            <div style="font-family:'DM Mono',monospace;font-size:2.2rem;color:var(--navy);line-height:1;">92.4%</div>
-                            <div style="font-size:.78rem;color:#7b82a8;margin-top:2px;">Avg this week</div>
-                        </div>
-                        <span class="tag tag-present"><i class="bi bi-arrow-up-short"></i> +1.2% vs last week</span>
-                    </div>
-                    <div class="mini-chart mb-2">
-                        <div class="mini-bar" style="height:65%;" title="Mon"></div>
-                        <div class="mini-bar" style="height:80%;" title="Tue"></div>
-                        <div class="mini-bar" style="height:55%;" title="Wed"></div>
-                        <div class="mini-bar active" style="height:92%;" title="Thu"></div>
-                        <div class="mini-bar active" style="height:88%;" title="Fri"></div>
-                        <div class="mini-bar" style="height:30%;" title="Sat"></div>
-                        <div class="mini-bar" style="height:20%;" title="Sun"></div>
-                    </div>
-                    <div class="d-flex justify-content-between" style="font-size:.68rem;color:#9099be;letter-spacing:.5px;">
-                        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                    </div>
-                    <div class="row g-2 mt-3">
-                        <div class="col-4 text-center">
-                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:#1db87d;font-weight:500;">1,184</div>
-                            <div style="font-size:.7rem;color:#9099be;">Present</div>
-                        </div>
-                        <div class="col-4 text-center">
-                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--rose);font-weight:500;">68</div>
-                            <div style="font-size:.7rem;color:#9099be;">Absent</div>
-                        </div>
-                        <div class="col-4 text-center">
-                            <div style="font-family:'DM Mono',monospace;font-size:1.1rem;color:#c4860e;font-weight:500;">32</div>
-                            <div style="font-size:.7rem;color:#9099be;">Late</div>
-                        </div>
-                    </div>
-                </div>
+            </div>
+            <div class="stat-card rose">
+                <div class="stat-icon"><i class="bi bi-exclamation-diamond"></i></div>
+                <div class="stat-label">Outstanding</div>
+                <div class="stat-value">₦@((Model.TotalExpected - Model.TotalCollected).ToString("N0"))</div>
+                <div class="stat-sub">@Model.TotalCategories payment categories</div>
+            </div>
+            <div class="stat-card gold">
+                <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-label">Students Registered</div>
+                <div class="stat-value">@Model.TotalStudentsRegistered.ToString("N0")</div>
+                <div class="stat-sub">Across all terms this session</div>
             </div>
         </div>
 
-        <!-- Subject Performance -->
-        <div class="col-lg-7">
-            <div class="panel h-100">
-                <div class="panel-head">
-                    <span class="panel-title">Subject Performance (Avg Score)</span>
-                    <a href="#" class="panel-action">Details →</a>
-                </div>
-                <div class="p-4">
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">Mathematics</span><span class="bar-val">74%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:74%;background:#3b82f6;"></div></div>
-                    </div>
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">English Language</span><span class="bar-val">81%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:81%;background:var(--mint);"></div></div>
-                    </div>
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">Basic Science</span><span class="bar-val">68%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:68%;background:var(--rose);"></div></div>
-                    </div>
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">Social Studies</span><span class="bar-val">79%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:79%;background:var(--gold);"></div></div>
-                    </div>
-                    <div class="subject-bar">
-                        <div class="bar-info"><span class="bar-name">ICT / Computer</span><span class="bar-val">88%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:88%;background:#a855f7;"></div></div>
-                    </div>
-                    <div class="subject-bar mb-0">
-                        <div class="bar-info"><span class="bar-name">Civic Education</span><span class="bar-val">72%</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--sky);"></div></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Students Table + Upcoming Events -->
-    <div class="row g-3 mb-3">
-        <div class="col-lg-8">
-            <div class="panel">
-                <div class="panel-head">
-                    <span class="panel-title">Recent Student Activity</span>
-                    <a href="#" class="panel-action">All Students →</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Class</th>
-                                <th>Subject</th>
-                                <th>Last Score</th>
-                                <th>Attendance</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#e8f0ff;color:#3b5bdb;">AO</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Adaeze Okonkwo</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00124</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>JSS 3B</td>
-                                <td>Mathematics</td>
-                                <td><span style="font-family:'DM Mono',monospace;">87/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">96%</span></td>
-                                <td><span class="tag tag-present">Present</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#fff0f2;color:#e84d6a;">CB</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Chukwuemeka Bello</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00115</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>SS 2A</td>
-                                <td>Physics</td>
-                                <td><span style="font-family:'DM Mono',monospace;">62/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">78%</span></td>
-                                <td><span class="tag tag-late">Late</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#e6faf4;color:#1db87d;">FI</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Fatimah Ibrahim</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00098</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>SS 1C</td>
-                                <td>Chemistry</td>
-                                <td><span style="font-family:'DM Mono',monospace;">91/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">100%</span></td>
-                                <td><span class="tag tag-present">Present</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#fef4d3;color:#c4860e;">TN</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Tunde Nwachukwu</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00076</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>JSS 2A</td>
-                                <td>English</td>
-                                <td><span style="font-family:'DM Mono',monospace;">55/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">60%</span></td>
-                                <td><span class="tag tag-absent">Absent</span></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="student-ava" style="background:#f0e8ff;color:#a855f7;">KA</div>
-                                        <div>
-                                            <div style="font-weight:600;font-size:.84rem;">Kemi Adeyemi</div>
-                                            <div style="font-size:.7rem;color:#9099be;">STU-00143</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>SS 3B</td>
-                                <td>Biology</td>
-                                <td><span style="font-family:'DM Mono',monospace;">78/100</span></td>
-                                <td><span style="font-family:'DM Mono',monospace;">89%</span></td>
-                                <td><span class="tag tag-present">Present</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Upcoming Events -->
-        <div class="col-lg-4">
-            <div class="panel h-100">
-                <div class="panel-head">
-                    <span class="panel-title">Upcoming Events</span>
-                    <a href="#" class="panel-action">Calendar →</a>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">28</div><div class="month">Mar</div></div>
-                    <div class="event-divider" style="background:var(--sky);"></div>
-                    <div><div class="event-title">Mid-Term Examinations Begin</div><div class="event-meta"><i class="bi bi-clock"></i> 8:00 AM · All Classes</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">01</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:var(--gold);"></div>
-                    <div><div class="event-title">Parent-Teacher Meeting</div><div class="event-meta"><i class="bi bi-people"></i> 10:00 AM · Hall A</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">05</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:var(--mint);"></div>
-                    <div><div class="event-title">Inter-House Sports Day</div><div class="event-meta"><i class="bi bi-trophy"></i> 7:30 AM · Field</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">12</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:var(--rose);"></div>
-                    <div><div class="event-title">Second Term Ends</div><div class="event-meta"><i class="bi bi-flag-fill"></i> End of Term</div></div>
-                </div>
-                <div class="event-item">
-                    <div class="event-date-box"><div class="day">20</div><div class="month">Apr</div></div>
-                    <div class="event-divider" style="background:#a855f7;"></div>
-                    <div><div class="event-title">Third Term Resumption</div><div class="event-meta"><i class="bi bi-door-open"></i> 7:45 AM · All</div></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notices + Fee Summary -->
-    <div class="row g-3">
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-head">
-                    <span class="panel-title">Notice Board</span>
-                    <a href="#" class="panel-action">All Notices →</a>
-                </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#e8f4ff;color:#3b82f6;"><i class="bi bi-megaphone-fill"></i></div>
+        <!-- ═══ CATEGORY SUMMARY TABLE + ITEM SUMMARY TABLE ═══ -->
+        <div class="charts-row">
+            <!-- Category Summary -->
+            <div class="chart-panel">
+                <div class="panel-header">
                     <div>
-                        <div class="notice-title">Uniform Policy Update — Term 3</div>
-                        <div class="notice-date">Mar 26, 2026 · By Admin</div>
+                        <div class="panel-title"><i class="bi bi-collection me-1"></i> Payment by Category</div>
+                        <div class="panel-subtitle">@Model.CurrentTermName Term — @Model.CurrentSessionName</div>
+                    </div>
+                    <span class="panel-badge">Summary</span>
+                </div>
+                <div id="categorySummaryContainer">
+                    <div class="chart-loading">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading...
                     </div>
                 </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#fef4d3;color:#c4860e;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            </div>
+
+            <!-- Item Summary -->
+            <div class="chart-panel">
+                <div class="panel-header">
                     <div>
-                        <div class="notice-title">Fee Deadline: 31 March 2026</div>
-                        <div class="notice-date">Mar 24, 2026 · Finance Dept</div>
+                        <div class="panel-title"><i class="bi bi-list-ul me-1"></i> Payment by Item</div>
+                        <div class="panel-subtitle">@Model.CurrentTermName Term — @Model.CurrentSessionName</div>
                     </div>
+                    <span class="panel-badge">Details</span>
                 </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#e6faf4;color:#1db87d;"><i class="bi bi-award-fill"></i></div>
-                    <div>
-                        <div class="notice-title">Best Student Award Nominations Open</div>
-                        <div class="notice-date">Mar 22, 2026 · Academic Office</div>
-                    </div>
-                </div>
-                <div class="notice-item">
-                    <div class="notice-icon" style="background:#fff0f2;color:#e84d6a;"><i class="bi bi-shield-exclamation"></i></div>
-                    <div>
-                        <div class="notice-title">Security Alert: Gate Access Protocol</div>
-                        <div class="notice-date">Mar 20, 2026 · Security</div>
+                <div id="itemSummaryContainer">
+                    <div class="chart-loading">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading...
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-head">
-                    <span class="panel-title">Fee Collection Summary</span>
-                    <a href="#" class="panel-action">Finance →</a>
+        <!-- ═══ CHARTS ROW 1: Category Trend (full width) ═══ -->
+        <div class="charts-full">
+            <div class="chart-panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title"><i class="bi bi-graph-up me-1"></i> Payment Collection Trend by Category</div>
+                        <div class="panel-subtitle">Last 10 academic sessions</div>
+                    </div>
+                    <span class="panel-badge">Trend</span>
                 </div>
-                <div class="p-4">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Total Expected</span>
-                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:var(--navy);">₦4,800,000</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span style="font-size:.83rem;font-weight:600;color:#2d3461;">Collected</span>
-                        <span style="font-family:'DM Mono',monospace;font-size:.88rem;color:#1db87d;">₦4,176,000</span>
-                    </div>
-                    <div class="bar-track mb-1" style="height:10px;">
-                        <div class="bar-fill" style="width:87%;background:linear-gradient(90deg,var(--mint),#3b82f6);"></div>
-                    </div>
-                    <div style="font-size:.72rem;color:#9099be;margin-bottom:18px;">87% collected · ₦624,000 outstanding</div>
-
-                    <div class="row g-2">
-                        <div class="col-4">
-                            <div style="background:#e6faf4;border-radius:10px;padding:12px;text-align:center;">
-                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#1db87d;">842</div>
-                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Fully Paid</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div style="background:#fef4d3;border-radius:10px;padding:12px;text-align:center;">
-                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#c4860e;">289</div>
-                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Partial</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div style="background:#fff0f2;border-radius:10px;padding:12px;text-align:center;">
-                                <div style="font-family:'DM Mono',monospace;font-size:1rem;color:var(--rose);">153</div>
-                                <div style="font-size:.7rem;color:#9099be;margin-top:3px;">Unpaid</div>
-                            </div>
-                        </div>
-                    </div>
+                <div style="position:relative;height:340px;">
+                    <canvas id="categoryTrendChart"></canvas>
                 </div>
             </div>
         </div>
-    </div>
 
-</div><!-- /content-inner -->
+        <!-- ═══ CHARTS ROW 2: Item Chart + Term Reg Chart ═══ -->
+        <div class="charts-row">
+            <div class="chart-panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title"><i class="bi bi-bar-chart-line me-1"></i> Payment Items — Expected vs Collected</div>
+                        <div class="panel-subtitle">@Model.CurrentTermName Term — @Model.CurrentSessionName</div>
+                    </div>
+                    <span class="panel-badge">Current Term</span>
+                </div>
+                <div style="position:relative;height:320px;">
+                    <canvas id="itemPaymentChart"></canvas>
+                </div>
+            </div>
 
+            <div class="chart-panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title"><i class="bi bi-person-lines-fill me-1"></i> Term Registrations</div>
+                        <div class="panel-subtitle">@Model.CurrentSessionName session</div>
+                    </div>
+                    <span class="panel-badge">Enrollment</span>
+                </div>
+                <div style="position:relative;height:320px;">
+                    <canvas id="termRegChart"></canvas>
+                </div>
+            </div>
+        </div>
+    }
+</div>
 
+@section Scripts {
+    @if (Model.SettingsConfigured)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                // ── Color palette ──
+                const COLORS = {
+                    navy: '#0b1437',
+                    blue: '#4fc8f4',
+                    green: '#3dd9ac',
+                    gold: '#f5b731',
+                    rose: '#ff6b84',
+                    purple: '#a78bfa',
+                    cyan: '#22d3ee',
+                    orange: '#fb923c',
+                    teal: '#2dd4bf',
+                    indigo: '#818cf8'
+                };
+                const PALETTE = [COLORS.blue, COLORS.green, COLORS.gold, COLORS.rose, COLORS.purple, COLORS.cyan, COLORS.orange, COLORS.teal, COLORS.indigo, '#f472b6'];
+
+                const defaultOpts = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11 } } },
+                        tooltip: {
+                            backgroundColor: '#0b1437',
+                            titleFont: { size: 12, weight: '600' },
+                            bodyFont: { size: 11 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function (ctx) {
+                                    let val = ctx.parsed.y ?? ctx.parsed;
+                                    if (typeof val === 'number' && val >= 1000) return ctx.dataset.label + ': \u20A6' + val.toLocaleString();
+                                    return ctx.dataset.label + ': ' + val.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
+                        y: {
+                            grid: { color: 'rgba(0,0,0,.04)' },
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function (v) { return v >= 1000 ? '\u20A6' + (v / 1000).toFixed(0) + 'k' : '\u20A6' + v; }
+                            }
+                        }
+                    }
+                };
+
+                // ─── 1. Category Summary Table ───
+                $.getJSON('/api/v1/dashboard/category-summary', function (resp) {
+                    if (!resp.success || !resp.data || resp.data.length === 0) {
+                        $('#categorySummaryContainer').html('<div class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No payment data found</div>');
+                        return;
+                    }
+                    var html = '<table class="summary-table"><thead><tr><th>Category</th><th style="text-align:right;">Expected</th><th style="text-align:right;">Collected</th><th style="text-align:right;">Outstanding</th></tr></thead><tbody>';
+                    var totalExp = 0, totalCol = 0;
+                    resp.data.forEach(function (c) {
+                        totalExp += c.expected;
+                        totalCol += c.collected;
+                        html += '<tr><td><span class="cat-badge">' + c.categoryName + '</span></td>';
+                        html += '<td class="amount" style="text-align:right;">\u20A6' + c.expected.toLocaleString() + '</td>';
+                        html += '<td class="amount text-collected" style="text-align:right;">\u20A6' + c.collected.toLocaleString() + '</td>';
+                        html += '<td class="amount text-outstanding" style="text-align:right;">\u20A6' + c.outstanding.toLocaleString() + '</td></tr>';
+                    });
+                    html += '</tbody><tfoot><tr style="border-top:2px solid #e2e8f0;">';
+                    html += '<td style="font-weight:700;font-size:.8rem;">Grand Total</td>';
+                    html += '<td class="amount" style="text-align:right;font-weight:800;">\u20A6' + totalExp.toLocaleString() + '</td>';
+                    html += '<td class="amount text-collected" style="text-align:right;font-weight:800;">\u20A6' + totalCol.toLocaleString() + '</td>';
+                    html += '<td class="amount text-outstanding" style="text-align:right;font-weight:800;">\u20A6' + (totalExp - totalCol).toLocaleString() + '</td>';
+                    html += '</tr></tfoot></table>';
+                    $('#categorySummaryContainer').html(html);
+                });
+
+                // ─── 2. Item Summary Table ───
+                $.getJSON('/api/v1/dashboard/item-summary', function (resp) {
+                    if (!resp.success || !resp.data || resp.data.length === 0) {
+                        $('#itemSummaryContainer').html('<div class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No item data found</div>');
+                        return;
+                    }
+                    var html = '<div style="max-height:360px;overflow-y:auto;"><table class="summary-table"><thead><tr><th>Item</th><th>Category</th><th style="text-align:right;">Expected</th><th style="text-align:right;">Collected</th></tr></thead><tbody>';
+                    resp.data.forEach(function (item) {
+                        html += '<tr><td style="font-weight:600;">' + item.itemName + '</td>';
+                        html += '<td><span class="cat-badge">' + item.categoryName + '</span></td>';
+                        html += '<td class="amount" style="text-align:right;">\u20A6' + item.expected.toLocaleString() + '</td>';
+                        html += '<td class="amount text-collected" style="text-align:right;">\u20A6' + item.collected.toLocaleString() + '</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    $('#itemSummaryContainer').html(html);
+                });
+
+                // ─── 3. Category Trend Chart (Bar — last 10 sessions) ───
+                $.getJSON('/api/v1/dashboard/category-trend', function (resp) {
+                    if (!resp.success || !resp.data) return;
+                    var d = resp.data;
+                    var datasets = d.series.map(function (s, i) {
+                        return {
+                            label: s.categoryName,
+                            data: s.amounts,
+                            backgroundColor: PALETTE[i % PALETTE.length] + 'CC',
+                            borderColor: PALETTE[i % PALETTE.length],
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 32
+                        };
+                    });
+                    new Chart(document.getElementById('categoryTrendChart'), {
+                        type: 'bar',
+                        data: { labels: d.sessions, datasets: datasets },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 11 } } },
+                                tooltip: defaultOpts.plugins.tooltip
+                            },
+                            scales: defaultOpts.scales
+                        }
+                    });
+                });
+
+                // ─── 4. Item Payment Chart (Bar — current session/term) ───
+                $.getJSON('/api/v1/dashboard/item-chart', function (resp) {
+                    if (!resp.success || !resp.data) return;
+                    var d = resp.data;
+                    new Chart(document.getElementById('itemPaymentChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: d.labels,
+                            datasets: [
+                                {
+                                    label: 'Expected',
+                                    data: d.expected,
+                                    backgroundColor: COLORS.blue + '88',
+                                    borderColor: COLORS.blue,
+                                    borderWidth: 1,
+                                    borderRadius: 4,
+                                    maxBarThickness: 28
+                                },
+                                {
+                                    label: 'Collected',
+                                    data: d.collected,
+                                    backgroundColor: COLORS.green + 'CC',
+                                    borderColor: COLORS.green,
+                                    borderWidth: 1,
+                                    borderRadius: 4,
+                                    maxBarThickness: 28
+                                }
+                            ]
+                        },
+                        options: defaultOpts
+                    });
+                });
+
+                // ─── 5. Term Registration Chart (Bar — current session) ───
+                $.getJSON('/api/v1/dashboard/term-registration-chart', function (resp) {
+                    if (!resp.success || !resp.data) return;
+                    var d = resp.data;
+                    var bgColors = [COLORS.blue + 'CC', COLORS.gold + 'CC', COLORS.rose + 'CC'];
+                    var brColors = [COLORS.blue, COLORS.gold, COLORS.rose];
+                    new Chart(document.getElementById('termRegChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: d.labels,
+                            datasets: [{
+                                label: 'Students Registered',
+                                data: d.counts,
+                                backgroundColor: bgColors,
+                                borderColor: brColors,
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                maxBarThickness: 60
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#0b1437',
+                                    titleFont: { size: 12, weight: '600' },
+                                    bodyFont: { size: 11 },
+                                    padding: 12,
+                                    cornerRadius: 8,
+                                    callbacks: {
+                                        label: function (ctx) { return ctx.parsed.y + ' students'; }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' } } },
+                                y: {
+                                    grid: { color: 'rgba(0,0,0,.04)' },
+                                    ticks: { font: { size: 10 }, stepSize: 1 },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
+    }
+}

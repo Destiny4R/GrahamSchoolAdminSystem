@@ -4,7 +4,7 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
 {
     public class EmployeeViewModel
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         [Required(ErrorMessage = "First name is required")]
         [StringLength(100, ErrorMessage = "First name cannot exceed 100 characters")]
@@ -25,19 +25,23 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
         public string Phone { get; set; }
 
         [StringLength(100, ErrorMessage = "Department cannot exceed 100 characters")]
-        public string Department { get; set; }
+        public string? Department { get; set; }
 
         [StringLength(150, ErrorMessage = "Address cannot exceed 150 characters")]
         public string Address { get; set; }
 
         public int? GenderId { get; set; }
 
-        public string ApplicationUserId { get; set; }
+        public string? ApplicationUserId { get; set; }
 
         public bool IsActive { get; set; } = true;
 
-        // Navigation property for display
-        public List<string> Positions { get; set; } = new();
+        // Single position assignment (Employee → Position → Roles → Permissions)
+        public int? PositionId { get; set; }
+        public string? PositionName { get; set; }
+
+        // Roles inherited from position for display
+        public List<string> Roles { get; set; } = new();
 
         // Full name for display
         public string FullName => $"{FirstName} {LastName}";
