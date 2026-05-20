@@ -111,7 +111,8 @@ var AcademicSession = (function() {
                             return `<div class="action-buttons">${editBtn}${deleteBtn}</div>`;
                         }
                     }
-                ]
+                ],
+                order: [[2, 'desc']]
             });
 
             // Search functionality
@@ -315,7 +316,7 @@ var SchoolSubClass = (function() {
                                             title="Edit">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>` : '';
-                            var deleteBtn = perms.canDelete ? `<button class="btn btn-sm btn-delete-subclass" 
+                            var deleteBtn = perms.canDelete ? `<button class="btn btn-sm btn-subclass" 
                                             data-id="${row.id}" 
                                             data-name="${row.name}"
                                             title="Delete">
@@ -324,7 +325,8 @@ var SchoolSubClass = (function() {
                             return `<div class="action-buttons">${editBtn}${deleteBtn}</div>`;
                         }
                     }
-                ]
+                ],
+                order: [[2, 'desc']]
             });
 
             // Search functionality
@@ -335,6 +337,73 @@ var SchoolSubClass = (function() {
             });
         }
     }
+
+    //Delete subclass
+    $(document).on('click', '.btn-subclass', function () {
+        const id = $(this).data('id');
+        // call API to toggle
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: "btn btn-success rounded-pill btn-sm",
+                cancelButton: "btn btn-danger  rounded-pill btn-sm me-2"
+            },
+            buttonsStyling: false
+        });
+        swalWithBootstrapButtons.fire({
+            title: "Are you sure?",
+            text: "You want to remove this sub-class?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes!, Delete",
+            cancelButtonText: "No!, cancel",
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    type: "DELETE",
+                    url: `/api/v1/managesubclass/${id}`,
+                    data: {
+                        id: id
+                    },
+                    success: function (data) {
+                        $.unblockUI();
+                        if (data.success) {
+                            swalWithBootstrapButtons.fire(
+                                'Information!',
+                                data.message,
+                                'success'
+                            );
+                            subClassTable.ajax.reload(null, false);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: data.message,
+                                footer: 'Message'
+                            });
+                        }
+                    },
+                    beforeSend: function () {
+                        blockcallback();
+                    },
+                    error: function () {
+                        $.unblockUI();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Something went wrong!',
+                            footer: 'Check internet connectivity'
+                        });
+                    },
+                    complete: function () {
+                        $.unblockUI();
+                    }
+                });
+
+            }
+        });
+    });
+
 
     // Edit button click handler
     function handleEdit() {
@@ -617,7 +686,7 @@ var SchoolClass = (function () {
                     }
                 }
             ],
-            order: [[1, 'asc']],
+            order: [[2, 'desc']],
             language: {
                 processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
                 emptyTable: 'No school classes found',
@@ -1105,11 +1174,25 @@ var PaymentCategory = (function () {
                 {
                     data: 'createdAt',
                     render: function (data) {
-                        if (data) {
-                            var date = new Date(data);
-                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                        if (data != null) {
+                            var hours = new Date(data).getHours()
+                            let ap = hours >= 12 ? 'pm' : 'am';
+                            return data = data.toLocaleString('YYYY-MM-dd').slice(0, 19).replace('T', ' ') + ' ' + ap;
+                        } else {
+                            return "null";
                         }
-                        return 'N/A';
+                    }
+                },
+                {
+                    data: 'updatedAt',
+                    render: function (data) {
+                        if (data != null) {
+                            var hours = new Date(data).getHours()
+                            let ap = hours >= 12 ? 'pm' : 'am';
+                            return data = data.toLocaleString('YYYY-MM-dd').slice(0, 19).replace('T', ' ') + ' ' + ap;
+                        } else {
+                            return "null";
+                        }
                     }
                 },
                 {
@@ -1132,7 +1215,7 @@ var PaymentCategory = (function () {
                     }
                 }
             ],
-            order: [[1, 'asc']],
+            order: [[4, 'desc']],
             language: {
                 processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
                 emptyTable: 'No payment categories found',
@@ -1319,11 +1402,25 @@ var PaymentItem = (function () {
                 {
                     data: 'createdAt',
                     render: function (data) {
-                        if (data) {
-                            var date = new Date(data);
-                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                        if (data != null) {
+                            var hours = new Date(data).getHours()
+                            let ap = hours >= 12 ? 'pm' : 'am';
+                            return data = data.toLocaleString('YYYY-MM-dd').slice(0, 19).replace('T', ' ') + ' ' + ap;
+                        } else {
+                            return "null";
                         }
-                        return 'N/A';
+                    }
+                },
+                {
+                    data: 'updatedAt',
+                    render: function (data) {
+                        if (data != null) {
+                            var hours = new Date(data).getHours()
+                            let ap = hours >= 12 ? 'pm' : 'am';
+                            return data = data.toLocaleString('YYYY-MM-dd').slice(0, 19).replace('T', ' ') + ' ' + ap;
+                        } else {
+                            return "null";
+                        }
                     }
                 },
                 {
@@ -1346,7 +1443,7 @@ var PaymentItem = (function () {
                     }
                 }
             ],
-            order: [[1, 'asc']],
+            order: [[5, 'desc']],
             language: {
                 processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
                 emptyTable: 'No payment items found',
@@ -1500,6 +1597,21 @@ var PaymentSetup = (function () {
             });
     }
 
+    function loadSelectListDropdownMulti(url, selectId) {
+        fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data) {
+                    var sel = $(selectId);
+                    sel.empty();
+                    data.forEach(function (item) {
+                        sel.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                    sel.val(null).trigger('change');
+                }
+            });
+    }
+
     function loadItemsByCategory(categoryId, selectId, selectedVal) {
         if (!categoryId) {
             $(selectId).find('option:not(:first)').remove();
@@ -1557,6 +1669,18 @@ var PaymentSetup = (function () {
                     }
                 },
                 {
+                    data: 'createdAt',
+                    render: function (data) {
+                        if (data != null) {
+                            var hours = new Date(data).getHours()
+                            let ap = hours >= 12 ? 'pm' : 'am';
+                            return data = data.toLocaleString('YYYY-MM-dd').slice(0, 19).replace('T', ' ') + ' ' + ap;
+                        } else {
+                            return "null";
+                        }
+                    }
+                },
+                {
                     data: null, orderable: false, searchable: false,
                     render: function (data, type, row) {
                         var perms = window.userPermissions || {};
@@ -1576,7 +1700,7 @@ var PaymentSetup = (function () {
                     }
                 }
             ],
-            order: [[1, 'asc']],
+            order: [[8, 'desc']],
             language: {
                 processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
                 emptyTable: 'No payment setups found',
@@ -1589,10 +1713,20 @@ var PaymentSetup = (function () {
     }
 
     function handleCreate() {
+        // Initialize Select2 on multi-class select
+        if ($('#setupClassIds').length) {
+            $('#setupClassIds').select2({
+                placeholder: 'Select one or more classes',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#setupModal')
+            });
+        }
+
         $('#setupModal').on('show.bs.modal', function () {
             loadDropdown('/api/v1/paymentcategories/active', '#setupCategoryId');
             loadSelectListDropdown('/api/v1/dropdown/sessions', '#setupSessionId');
-            loadSelectListDropdown('/api/v1/dropdown/classes', '#setupClassId');
+            loadSelectListDropdownMulti('/api/v1/dropdown/classes', '#setupClassIds');
             $('#setupPaymentItemId').find('option:not(:first)').remove();
         });
 
@@ -1642,64 +1776,63 @@ var PaymentSetup = (function () {
 
         // Edit form now uses native method="post" — no JS submit handler needed
     }
+    $(document).on('click', '.btn-delete-setup', function () {
+        var id = $(this).data('id');
 
-    function handleDelete() {
-        $(document).on('click', '.btn-delete-setup', function () {
-            var id = $(this).data('id');
-
-            Swal.fire({
-                title: 'Delete Payment Setup?',
-                html: 'Are you sure you want to delete this setup?<br><small class="text-muted">This action cannot be undone.</small>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="bi bi-trash me-1"></i>Yes, delete it',
-                cancelButtonText: '<i class="bi bi-x-circle me-1"></i>Cancel'
-            }).then(function (result) {
-                if (result.isConfirmed) {
-                    fetch('/api/v1/paymentsetups/' + id, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() }
-                    })
+        Swal.fire({
+            title: 'Delete Payment Setup?',
+            html: 'Are you sure you want to delete this setup?<br><small class="text-muted">This action cannot be undone.</small>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="bi bi-trash me-1"></i>Yes, delete it',
+            cancelButtonText: '<i class="bi bi-x-circle me-1"></i>Cancel'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                fetch('/api/v1/paymentsetups/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() }
+                })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data.success) { Swal.fire('Deleted!', data.message, 'success'); table.ajax.reload(); }
                         else { Swal.fire('Error!', data.message, 'error'); }
                     })
                     .catch(function () { Swal.fire('Error!', 'An unexpected error occurred', 'error'); });
-                }
-            });
+            }
         });
-    }
+    });
+    
+    $(document).on('click', '.btn-toggle-setup', function () {
+        var id = $(this).data('id');
+        var isActive = $(this).data('active');
+        var msg = isActive ? 'Deactivate this setup?' : 'Activate this setup?';
 
-    function handleToggle() {
-        $(document).on('click', '.btn-toggle-setup', function () {
-            var id = $(this).data('id');
-            var isActive = $(this).data('active');
-            var msg = isActive ? 'Deactivate this setup?' : 'Activate this setup?';
-
-            Swal.fire({ title: 'Are you sure?', text: msg, icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes', cancelButtonText: 'No' })
+        Swal.fire({ title: 'Are you sure?', text: msg, icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes', cancelButtonText: 'No' })
             .then(function (result) {
                 if (result.isConfirmed) {
                     fetch('/api/v1/paymentsetups/' + id + '/toggle', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() }
                     })
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        if (data.success) { Swal.fire('Done!', data.message, 'success'); table.ajax.reload(); }
-                        else { Swal.fire('Error!', data.message, 'error'); }
-                    });
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (data.success) { Swal.fire('Done!', data.message, 'success'); table.ajax.reload(); }
+                            else { Swal.fire('Error!', data.message, 'error'); }
+                        });
                 }
             });
-        });
-    }
+    });
 
     function resetForm() {
-        if (document.getElementById('setupForm')) {
-            document.getElementById('setupForm').reset();
+        var form = document.querySelector('#setupModal form');
+        if (form) {
+            form.reset();
             $('#setupPaymentItemId').find('option:not(:first)').remove();
+            if ($('#setupClassIds').length) {
+                $('#setupClassIds').val(null).trigger('change');
+            }
         }
     }
 
@@ -1845,6 +1978,281 @@ var StudentPayments = (function () {
     function init() {
         loadDropdowns();
         initDataTable();
+    }
+
+    return { init: init };
+})();
+
+// ================================================================
+// New Payment Module (Term Registration Driven)
+// ================================================================
+var NewPayment = (function () {
+    'use strict';
+
+    var termRegistrationId = 0;
+
+    function formatNaira(amount) {
+        return '\u20A6' + parseFloat(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function displayPaymentData(data) {
+        termRegistrationId = data.termRegistrationId;
+
+        $('#newInfoStudentName').text(data.studentName || 'N/A');
+        $('#newInfoStudentName1').text(data.studentName || 'N/A');
+        $('#newInfoAdmissionNo').text(data.admissionNo || 'N/A');
+        $('#newInfoClassName').text(data.className || 'N/A');
+        $('#newInfoSessionName').text(data.sessionName || 'N/A');
+        $('#newInfoTermName').text(data.termName || 'N/A');
+
+        var $container = $('#newPaymentItemsContainer');
+        $container.empty();
+
+        if (!data.categoryGroups || data.categoryGroups.length === 0) {
+            $container.html('<div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-2"></i>No active payment categories found for this student.</div>');
+            $('#newPaymentResultContainer').show();
+            return;
+        }
+
+        $.each(data.categoryGroups, function (i, category) {
+            var hasSelectableItems = category.items && category.items.some(function (x) { return !x.isFullyPaid; });
+            var html = '<div class="card mb-3 category-card">';
+            html += '<div class="card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#new-cat-' + category.categoryId + '" style="cursor:pointer;">';
+            html += '<h6 class="mb-0"><i class="bi bi-tag-fill me-2"></i>' + category.categoryName;
+            html += ' <span class="badge bg-secondary ms-2">' + category.items.length + ' items</span></h6>';
+            html += '<div>';
+            if (hasSelectableItems) {
+                html += '<button type="button" class="btn btn-sm btn-outline-primary btn-new-pay-all-category" data-category-id="' + category.categoryId + '">';
+                html += '<i class="bi bi-check-all me-1"></i>Select All</button> ';
+            }
+            html += '<i class="bi bi-chevron-down"></i></div>';
+            html += '</div>';
+            html += '<div class="collapse show" id="new-cat-' + category.categoryId + '">';
+            html += '<div class="card-body p-0"><table class="table table-hover mb-0"><thead class="table-light"><tr>';
+            html += '<th style="width:40px;"><input type="checkbox" class="form-check-input new-category-check" data-category-id="' + category.categoryId + '" ' + (hasSelectableItems ? '' : 'disabled') + ' /></th>';
+            html += '<th>Item</th><th>Expected</th><th>Paid</th><th>Remaining</th><th style="width:180px;">Amount to Pay</th>';
+            html += '</tr></thead><tbody>';
+
+            $.each(category.items, function (j, item) {
+                var isFullyPaid = item.isFullyPaid;
+                var rowClass = isFullyPaid ? 'table-success' : '';
+                html += '<tr class="new-payment-item-row ' + rowClass + '" data-category-id="' + category.categoryId + '" data-item-id="' + item.paymentItemId + '" data-remaining="' + item.remaining + '">';
+
+                if (!isFullyPaid) {
+                    html += '<td><input type="checkbox" class="form-check-input new-item-check" data-item-id="' + item.paymentItemId + '" /></td>';
+                } else {
+                    html += '<td><i class="bi bi-check-circle-fill text-success" title="Already fully paid"></i></td>';
+                }
+
+                html += '<td>' + item.itemName + '</td>';
+                html += '<td>' + formatNaira(item.expectedAmount) + '</td>';
+                html += '<td>' + formatNaira(item.alreadyPaid) + '</td>';
+
+                if (isFullyPaid) {
+                    html += '<td><span class="badge bg-success">Fully Paid</span></td>';
+                    html += '<td><span class="text-muted">—</span></td>';
+                } else {
+                    html += '<td><span class="text-danger fw-bold">' + formatNaira(item.remaining) + '</span></td>';
+                    html += '<td><input type="number" readonly class="form-control form-control-sm new-amount-input" data-item-id="' + item.paymentItemId + '" min="0" max="' + item.remaining + '" step="0.01" value="0" disabled /></td>';
+                }
+
+                html += '</tr>';
+            });
+
+            html += '</tbody></table></div></div></div>';
+            $container.append(html);
+        });
+
+        recalculateTotal();
+        $('#newPaymentResultContainer').show();
+    }
+
+    function loadForTermRegistration() {
+        var termRegId = parseInt(window.newPaymentTermRegId || 0);
+        if (!termRegId) {
+            Swal.fire('Error', 'Invalid term registration selected.', 'error');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/v1/studentpayments/payable-items/' + termRegId,
+            type: 'GET',
+            success: function (resp) {
+                if (resp.success) {
+                    displayPaymentData(resp.data);
+                } else {
+                    $('#newPaymentResultContainer').hide();
+                    Swal.fire('Not Found', resp.message || 'No payable items found.', 'warning');
+                }
+            },
+            error: function () {
+                $('#newPaymentResultContainer').hide();
+                Swal.fire('Error', 'An unexpected error occurred while loading payable items.', 'error');
+            }
+        });
+    }
+
+    function handleCheckboxes() {
+        $(document).on('change', '.new-item-check', function () {
+            var $row = $(this).closest('tr');
+            var $input = $row.find('.new-amount-input');
+            if ($(this).is(':checked')) {
+                var remaining = parseFloat($row.data('remaining')) || 0;
+                $input.prop('disabled', false).val(remaining.toFixed(2));
+            } else {
+                $input.prop('disabled', true).val('0');
+            }
+            recalculateTotal();
+        });
+
+        $(document).on('change', '.new-category-check', function () {
+            var categoryId = $(this).data('category-id');
+            var isChecked = $(this).is(':checked');
+            $('tr[data-category-id="' + categoryId + '"]').each(function () {
+                var $check = $(this).find('.new-item-check');
+                if ($check.length && $check.prop('checked') !== isChecked) {
+                    $check.prop('checked', isChecked).trigger('change');
+                }
+            });
+        });
+
+        $(document).on('click', '.btn-new-pay-all-category', function (e) {
+            e.stopPropagation();
+            var categoryId = $(this).data('category-id');
+            $('tr[data-category-id="' + categoryId + '"]').each(function () {
+                var $check = $(this).find('.new-item-check');
+                if ($check.length && !$check.is(':checked')) {
+                    $check.prop('checked', true).trigger('change');
+                }
+            });
+        });
+
+        $(document).on('input', '.new-amount-input', function () {
+            var max = parseFloat($(this).attr('max')) || 0;
+            var val = parseFloat($(this).val()) || 0;
+            if (val > max) {
+                $(this).val(max.toFixed(2));
+                Swal.fire('Warning', 'Amount cannot exceed remaining balance', 'warning');
+            }
+            if (val < 0) $(this).val('0');
+            recalculateTotal();
+        });
+    }
+
+    function recalculateTotal() {
+        var total = 0;
+        $('.new-item-check:checked').each(function () {
+            var $row = $(this).closest('tr');
+            var amount = parseFloat($row.find('.new-amount-input').val()) || 0;
+            total += amount;
+        });
+        var naira = '\u20A6' + total.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        $('#newTotalAmount').text(naira);
+        $('#newBtnSubmitPayment').prop('disabled', total <= 0);
+    }
+
+    function handleSubmit() {
+        $('#newBtnSubmitPayment').on('click', function () {
+            var items = [];
+
+            $('.new-item-check:checked').each(function () {
+                var $row = $(this).closest('tr');
+                var itemId = parseInt($row.data('item-id'));
+                var amount = parseFloat($row.find('.new-amount-input').val()) || 0;
+                if (amount > 0) {
+                    items.push({ paymentItemId: itemId, amountPaid: amount });
+                }
+            });
+
+            if (items.length === 0) {
+                Swal.fire('Warning', 'No items selected for payment', 'warning');
+                return;
+            }
+
+            var evidenceFile = null;
+            if (window.evidenceRequired) {
+                var fileInput = document.getElementById('newPaymentEvidence');
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    Swal.fire('Warning', 'Payment evidence is required. Please upload a file.', 'warning');
+                    return;
+                }
+                evidenceFile = fileInput.files[0];
+                var allowedExts = ['.jpg', '.jpeg', '.png', '.pdf'];
+                var fileName = evidenceFile.name.toLowerCase();
+                var ext = fileName.substring(fileName.lastIndexOf('.'));
+                if (allowedExts.indexOf(ext) === -1) {
+                    Swal.fire('Warning', 'Invalid file type. Accepted: JPG, JPEG, PNG, PDF', 'warning');
+                    return;
+                }
+                if (evidenceFile.size > 10 * 1024 * 1024) {
+                    Swal.fire('Warning', 'File size must not exceed 10MB', 'warning');
+                    return;
+                }
+            } else {
+                var optionalInput = document.getElementById('newPaymentEvidence');
+                if (optionalInput && optionalInput.files && optionalInput.files.length > 0) {
+                    evidenceFile = optionalInput.files[0];
+                }
+            }
+
+            var total = items.reduce(function (sum, i) { return sum + i.amountPaid; }, 0);
+            var narration = ($('#newPaymentNarration').val() || '').trim();
+
+            Swal.fire({
+                title: 'Confirm Payment',
+                html: 'You are about to process a payment of <strong>\u20A6' + total.toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</strong> for <strong>' + items.length + '</strong> item(s).<br><br>Proceed?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Submit Payment',
+                cancelButtonText: 'Cancel'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    var formData = new FormData();
+                    formData.append('termRegistrationId', termRegistrationId);
+                    formData.append('items', JSON.stringify(items));
+                    if (narration) formData.append('narration', narration);
+                    if (evidenceFile) formData.append('evidence', evidenceFile);
+
+                    $.ajax({
+                        url: '/api/v1/studentpayments/create',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (resp) {
+                            if (resp.success) {
+                                Swal.fire({
+                                    title: 'Payment Successful!',
+                                    text: resp.message,
+                                    icon: 'success',
+                                    confirmButtonText: 'View Receipt'
+                                }).then(function () {
+                                    window.location.href = '/admin/student-payments/receipt/' + resp.id;
+                                });
+                            } else {
+                                Swal.fire('Error', resp.message, 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'An unexpected error occurred', 'error');
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    function initEvidenceField() {
+        if (window.evidenceRequired) {
+            $('#newEvidenceUploadSection').show();
+        }
+    }
+
+    function init() {
+        handleCheckboxes();
+        handleSubmit();
+        initEvidenceField();
+        loadForTermRegistration();
     }
 
     return { init: init };
@@ -2600,6 +3008,115 @@ var CategoryReport = (function () {
     return { init: init };
 })();
 
+// ================================================================
+// Audit Logs Module
+// ================================================================
+var AuditLogs = (function () {
+    'use strict';
+
+    var dataTable;
+
+    function getLevelBadge(level) {
+        var cls = 'bg-secondary';
+        switch ((level || '').toUpperCase()) {
+            case 'INFO': cls = 'bg-info text-dark'; break;
+            case 'WARNING': cls = 'bg-warning text-dark'; break;
+            case 'ERROR': cls = 'bg-danger'; break;
+            case 'CRITICAL': cls = 'bg-dark'; break;
+            case 'DEBUG': cls = 'bg-secondary'; break;
+        }
+        return '<span class="badge ' + cls + '">' + (level || '—') + '</span>';
+    }
+
+    function initDataTable() {
+        dataTable = $('#auditLogsTable').DataTable({
+            processing: true,
+            serverSide: true,
+            searching: false,
+            responsive: true,
+            dom: 'Brtip',
+            buttons: ['excel', 'csv', 'print'],
+            ajax: {
+                url: '/home/GetLogsDataTable',
+                type: 'POST',
+                data: function (d) {
+                    d.loglevel = $('#filterLogLevel').val();
+                    d.action = $('#filterAction').val();
+                }
+            },
+            columns: [
+                { data: 'id', name: '0' },
+                {
+                    data: 'logLevel', name: '1',
+                    render: function (data) { return getLevelBadge(data); }
+                },
+                { data: 'action', name: '2', render: function (d) { return d || '—'; } },
+                { data: 'subject', name: '3', render: function (d) { return d || '—'; } },
+                { data: 'userName', name: '4', render: function (d) { return d || '—'; } },
+                { data: 'entityType', name: '5', render: function (d) { return d || '—'; } },
+                { data: 'ipAddress', name: '6', render: function (d) { return d || '—'; } },
+                { data: 'createdDate', name: '7' },
+                {
+                    data: null, orderable: false, searchable: false,
+                    render: function (data) {
+                        return '<button type="button" class="btn btn-sm btn-outline-primary btn-view-log" title="View Details">' +
+                            '<i class="bi bi-eye"></i></button>';
+                    }
+                }
+            ],
+            order: [[7, 'desc']],
+            language: {
+                emptyTable: 'No audit logs found',
+                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>'
+            }
+        });
+
+        // Search input
+        var searchTimer;
+        $('#logSearchInput').on('keyup', function () {
+            clearTimeout(searchTimer);
+            var val = this.value;
+            searchTimer = setTimeout(function () {
+                dataTable.search(val).draw();
+            }, 400);
+        });
+
+        // Filter dropdowns
+        $('#filterLogLevel, #filterAction').on('change', function () {
+            dataTable.ajax.reload();
+        });
+
+        // View detail button
+        $('#auditLogsTable').on('click', '.btn-view-log', function () {
+            var row = dataTable.row($(this).closest('tr')).data();
+            if (!row) return;
+
+            $('#modalLogId').text(row.id);
+            $('#modalLogLevel').html(getLevelBadge(row.logLevel));
+            $('#modalLogAction').text(row.action || '—');
+            $('#modalLogSubject').text(row.subject || '—');
+            $('#modalLogUser').text(row.userName || '—');
+            $('#modalLogEntityType').text(row.entityType || '—');
+            $('#modalLogEntityId').text(row.entityId || '—');
+            $('#modalLogIpAddress').text(row.ipAddress || '—');
+            $('#modalLogStatusCode').text(row.statusCode != null ? row.statusCode : '—');
+            $('#modalLogCreatedDate').text(row.createdDate || '—');
+            $('#modalLogDate').text(row.createdDate || '');
+            $('#modalLogMessage').text(row.message || '—');
+            $('#modalLogDetails').text(row.details || '—');
+
+            var modal = new bootstrap.Modal(document.getElementById('logDetailModal'));
+            modal.show();
+        });
+    }
+
+    function init() {
+        initDataTable();
+    }
+
+    return { init: init };
+})();
+
 // Initialize Payment modules when document is ready
 $(document).ready(function () {
     if ($("#paymentCategoriesTable").length) { PaymentCategory.init(); }
@@ -2607,8 +3124,10 @@ $(document).ready(function () {
     if ($("#paymentSetupsTable").length) { PaymentSetup.init(); }
     if ($("#studentPaymentsTable").length) { StudentPayments.init(); }
     if ($("#lookupCard").length) { MakePayment.init(); }
+    if ($("#newPaymentIntroCard").length) { NewPayment.init(); }
     if ($("#classReportTable").length) { ClassReport.init(); }
     if ($("#schoolReportTable").length) { SchoolReport.init(); }
     if ($("#categoryReportTable").length) { CategoryReport.init(); }
+    if ($("#auditLogsTable").length) { AuditLogs.init(); }
 });
 

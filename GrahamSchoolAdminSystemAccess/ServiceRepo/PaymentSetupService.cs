@@ -43,6 +43,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     .Include(x => x.Session)
                     .Include(x => x.SchoolClass)
                     .AsQueryable();
+                query = query.OrderByDescending(k => k.CreatedAt);
 
                 if (sessionFilter.HasValue && sessionFilter.Value > 0)
                     query = query.Where(x => x.SessionId == sessionFilter.Value);
@@ -64,8 +65,8 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 int recordsFiltered = await query.CountAsync();
 
                 query = sortDirection.ToLower() == "desc"
-                    ? query.OrderByDescending(x => x.Id)
-                    : query.OrderBy(x => x.Id);
+                    ? query.OrderByDescending(x => x.CreatedAt)
+                    : query.OrderBy(x => x.CreatedAt);
 
                 var rawData = await query
                     .Skip(skip)
@@ -183,6 +184,74 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
             }
         }
 
+        public async Task<ServiceResponse<string>> CreateBatchPaymentSetupAsync(PaymentSetupViewModel model)
+        {
+            try
+            {
+                if (model.ClassIds == null || model.ClassIds.Count == 0)
+                    return ServiceResponse<string>.Failure("At least one class must be selected");
+
+                if (model.Amount <= 0)
+                    return ServiceResponse<string>.Failure("Amount must be greater than 0");
+
+                var itemExists = await _context.PaymentItems.AnyAsync(x => x.Id == model.PaymentItemId && x.IsActive);
+                if (!itemExists)
+                    return ServiceResponse<string>.Failure("Selected payment item does not exist or is inactive");
+
+                var createdCount = 0;
+                var skippedClasses = new List<string>();
+
+                foreach (var classId in model.ClassIds.Distinct())
+                {
+                    var duplicate = await _context.PaymentSetups.AnyAsync(x =>
+                        x.PaymentItemId == model.PaymentItemId &&
+                        x.SessionId == model.SessionId &&
+                        x.Term == model.Term &&
+                        x.ClassId == classId);
+
+                    if (duplicate)
+                    {
+                        var className = await _context.SchoolClasses
+                            .Where(c => c.Id == classId)
+                            .Select(c => c.Name)
+                            .FirstOrDefaultAsync() ?? $"ID:{classId}";
+                        skippedClasses.Add(className);
+                        continue;
+                    }
+
+                    var setup = new PaymentSetup
+                    {
+                        PaymentItemId = model.PaymentItemId,
+                        SessionId = model.SessionId,
+                        Term = model.Term,
+                        ClassId = classId,
+                        Amount = model.Amount,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _context.PaymentSetups.Add(setup);
+                    createdCount++;
+                }
+
+                if (createdCount > 0)
+                    await _context.SaveChangesAsync();
+
+                if (createdCount == 0 && skippedClasses.Count > 0)
+                    return ServiceResponse<string>.Failure($"All selected classes already have this fee configured: {string.Join(", ", skippedClasses)}");
+
+                var message = $"Payment setup created for {createdCount} class(es) successfully";
+                if (skippedClasses.Count > 0)
+                    message += $". Skipped {skippedClasses.Count} duplicate(s): {string.Join(", ", skippedClasses)}";
+
+                return ServiceResponse<string>.Success(message, message);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResponse<string>.Failure($"Error creating batch payment setup: {ex.Message}");
+            }
+        }
+
         public async Task<ServiceResponse<bool>> UpdatePaymentSetupAsync(PaymentSetupViewModel model)
         {
             try
@@ -228,6 +297,12 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
         {
             try
             {
+                //Before deleting payment set up, check if there are payment records under it.
+                if (await _context.PaymentItems.AnyAsync(pi => pi.PaymentSetups.Any(ps => ps.Id == id)))
+                {
+                    return ServiceResponse<bool>.Failure("Cannot proceed: the payment setup is referenced by existing records. Delete all dependencies before retrying.");
+                }
+
                 var setup = await _context.PaymentSetups.FirstOrDefaultAsync(x => x.Id == id);
                 if (setup == null)
                     return ServiceResponse<bool>.Failure("Payment setup not found");

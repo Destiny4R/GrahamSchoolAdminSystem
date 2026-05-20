@@ -8,6 +8,7 @@
 @section Sheets{
     <link rel="stylesheet" href="~/css/shared-components.css" />
     <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
     <partial name="_DatatablesSheetFiles" />
 }
 
@@ -76,18 +77,19 @@
     </div>
 
     <div class="datatable-container">
-        <table id="paymentSetupsTable" class="table table-hover">
+        <table id="paymentSetupsTable" class="table table-hover table-sm" style="font-family:'Playfair Display', serif;">
             <thead>
                 <tr>
-                    <th class="col-1">#</th>
+                    <th>#</th>
                     <th>Payment Item</th>
                     <th>Category</th>
                     <th>Session</th>
                     <th>Term</th>
                     <th>Class</th>
                     <th>Amount</th>
-                    <th class="col-1">Status</th>
-                    <th class="col-1">Actions</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -164,25 +166,24 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group mb-3">
-                                <label class="form-label" asp-for="SetupModel.ClassId">
-                                    <i class="bi bi-building me-1"></i>Class <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-select" asp-for="SetupModel.ClassId" id="setupClassId" required>
-                                    <option value="">Select Class</option>
-                                </select>
-                                <span class="invalid-feedback" asp-validation-for="SetupModel.ClassId"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
                                 <label class="form-label" asp-for="SetupModel.Amount">
                                     <i class="bi bi-currency-exchange me-1"></i>Amount <span class="text-danger">*</span>
                                 </label>
                                 <input type="number" class="form-control" asp-for="SetupModel.Amount"
                                        placeholder="0.00" required min="0.01" step="0.01">
                                 <span class="invalid-feedback" asp-validation-for="SetupModel.Amount"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-building me-1"></i>Classes <span class="text-danger">*</span>
+                                    <small class="text-muted ms-1">(select one or more classes)</small>
+                                </label>
+                                <select class="form-select" name="SetupModel.ClassIds" id="setupClassIds" multiple required>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -318,6 +319,9 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <partial name="_DatatablesScriptsFiles" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/lib/jquery.blockUI/jquery.blockUI.min.js"></script>
+    <script src="~/lib/select2/js/select2.full.min.js"></script>
     <script>
         window.userPermissions = {
             canCreate: @Json.Serialize(Permissions.CanCreate),
@@ -325,5 +329,5 @@
             canDelete: @Json.Serialize(Permissions.CanDelete)
         };
     </script>
-    <script src="~/js/appmain.js"></script>
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
 }

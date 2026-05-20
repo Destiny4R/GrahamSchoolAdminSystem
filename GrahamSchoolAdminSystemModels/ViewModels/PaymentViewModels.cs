@@ -63,9 +63,11 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
         [Display(Name = "Term")]
         public Term Term { get; set; }
 
-        [Required]
         [Display(Name = "Class")]
         public int ClassId { get; set; }
+
+        [Display(Name = "Classes")]
+        public List<int>? ClassIds { get; set; }
 
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]

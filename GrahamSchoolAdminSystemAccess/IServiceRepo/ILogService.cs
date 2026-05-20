@@ -97,5 +97,18 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
         /// Get activity logs for an entity
         /// </summary>
         Task<List<dynamic>> GetEntityLogsAsync(string entityType, string entityId);
+
+        /// <summary>
+        /// Get logs for server-side DataTable processing
+        /// </summary>
+        Task<(List<object> data, int recordsTotal, int recordsFiltered)> GetLogsDataTableAsync(
+            int skip,
+            int pageSize,
+            string searchTerm,
+            int sortColumn,
+            string sortDirection,
+            string logLevelFilter = null,
+            string actionFilter = null
+        );
     }
 }

@@ -7,6 +7,7 @@
 
 @section Sheets{
     <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.css" />
     <link rel="stylesheet" href="~/css/admin-pages.css" />
     <partial name="_DatatablesSheetFiles" />
 }
@@ -47,23 +48,24 @@
         </div>
     }
 
-    <div class="search-filter-area">
+    @* <div class="search-filter-area">
         <div class="search-group">
             <label for="categorySearchInput">Search Categories:</label>
             <input type="text" id="categorySearchInput" class="form-control" placeholder="Search by category name...">
         </div>
-    </div>
+    </div> *@
 
     <div class="datatable-container">
-        <table id="paymentCategoriesTable" class="table table-hover">
+        <table id="paymentCategoriesTable" class="table table-hover table-sm" style="font-family:'Playfair Display', serif;">
             <thead>
                 <tr>
-                    <th class="col-1">#</th>
+                    <th>#</th>
                     <th>Category Name</th>
                     <th>Description</th>
-                    <th class="col-1">Status</th>
-                    <th class="col-2">Created</th>
-                    <th class="col-1">Actions</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -176,6 +178,8 @@
 }
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/lib/jquery.blockUI/jquery.blockUI.min.js"></script>
     <partial name="_DatatablesScriptsFiles" />
     <script>
         window.userPermissions = {
@@ -184,5 +188,5 @@
             canDelete: @Json.Serialize(Permissions.CanDelete)
         };
     </script>
-    <script src="~/js/appmain.js"></script>
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
 }

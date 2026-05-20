@@ -14,6 +14,7 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
             int? sessionFilter = null, int? termFilter = null, int? classFilter = null);
         Task<PaymentSetupViewModel> GetPaymentSetupByIdAsync(int id);
         Task<ServiceResponse<int>> CreatePaymentSetupAsync(PaymentSetupViewModel model);
+        Task<ServiceResponse<string>> CreateBatchPaymentSetupAsync(PaymentSetupViewModel model);
         Task<ServiceResponse<bool>> UpdatePaymentSetupAsync(PaymentSetupViewModel model);
         Task<ServiceResponse<bool>> DeletePaymentSetupAsync(int id);
         Task<ServiceResponse<bool>> TogglePaymentSetupAsync(int id);

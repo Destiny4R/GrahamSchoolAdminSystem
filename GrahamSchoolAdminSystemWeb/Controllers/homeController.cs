@@ -431,6 +431,46 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> GetLogsDataTable()
+        {
+            try
+            {
+                var request = ParseRequest();
+
+                string logLevelFilter = null;
+                string actionFilter = null;
+
+                if (Request.Form.ContainsKey("loglevel") && !string.IsNullOrWhiteSpace(Request.Form["loglevel"].FirstOrDefault()))
+                    logLevelFilter = Request.Form["loglevel"].FirstOrDefault();
+                if (Request.Form.ContainsKey("action") && !string.IsNullOrWhiteSpace(Request.Form["action"].FirstOrDefault()))
+                    actionFilter = Request.Form["action"].FirstOrDefault();
+
+                var (data, recordsTotal, recordsFiltered) = await _unitOfWork.LogService.GetLogsDataTableAsync(
+                    skip: request.Start ?? 0,
+                    pageSize: request.Length ?? 10,
+                    searchTerm: request.SearchValue ?? "",
+                    sortColumn: request.SortColumn,
+                    sortDirection: request.SortDirection ?? "asc",
+                    logLevelFilter: logLevelFilter,
+                    actionFilter: actionFilter
+                );
+
+                return new JsonResult(new
+                {
+                    draw = request.Draw,
+                    recordsFiltered = recordsFiltered,
+                    recordsTotal = recordsTotal,
+                    data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading audit logs DataTable");
+                return Json(new { error = "Error loading data" });
+            }
+        }
+
         private async Task<IActionResult> ExecuteDataTableAsync<T>(Func<int, int, string, int, string, Task<(List<T> data, int recordsTotal, int recordsFiltered)>> serviceCall, string errorMessage = "An error occurred")
         {
             var request = ParseRequest();

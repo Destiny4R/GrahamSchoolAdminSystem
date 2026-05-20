@@ -1,0 +1,125 @@
+@page
+@model GrahamSchoolAdminSystemWeb.Pages.admin.student_payments.new_paymentModel
+@inject GrahamSchoolAdminSystemWeb.Helpers.ViewPermissionService Permissions
+@{
+    ViewData["Title"] = "New Payment";
+    await Permissions.InitializeAsync(User);
+}
+
+@section Sheets{
+    <link rel="stylesheet" href="~/css/shared-components.css" />
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link href="~/lib/sweetalert2/sweetalert2.css" rel="stylesheet" />
+}
+
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-cash-coin"></i> New Payment
+        </h1>
+        <p class="text-white">Load student payable categories automatically from term registration</p>
+    </div>
+    <div class="header-actions">
+        <a asp-page="/admin/termly-registeration/index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="page-content">
+    @if (!string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card mb-4" id="newPaymentIntroCard">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Payment Source</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold mb-1">Student Name</label>
+                    <div><span id="newInfoStudentName1"></span></div>
+                </div>
+                <input type="hidden" class="form-control" id="newPaymentTermRegIdDisplay" value="@Model.TermRegId" readonly />
+                <div class="col-md-6">
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-lightning-charge-fill me-1"></i>
+                        Student details and active payment categories will auto-load.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="newPaymentResultContainer" style="display:none;">
+        <div class="card mb-4" id="studentInfoCard">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Student Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3"><strong>Student:</strong> <span id="newInfoStudentName"></span></div>
+                    <div class="col-md-2"><strong>Adm. No:</strong> <span id="newInfoAdmissionNo"></span></div>
+                    <div class="col-md-3"><strong>Class:</strong> <span id="newInfoClassName"></span></div>
+                    <div class="col-md-2"><strong>Session:</strong> <span id="newInfoSessionName"></span></div>
+                    <div class="col-md-2"><strong>Term:</strong> <span id="newInfoTermName"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="newPaymentItemsContainer"></div>
+
+        <div class="card border-primary mt-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">
+                        Total Selected: <span id="newTotalAmount" class="text-primary fw-bold">₦0.00</span>
+                    </h4>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="newPaymentNarration" class="form-label">Narration <small class="text-muted">(optional, max 120 chars)</small></label>
+                        <input type="text" id="newPaymentNarration" class="form-control" maxlength="120" placeholder="Payment narration..." />
+                    </div>
+                    <div class="col-md-6" id="newEvidenceUploadSection" style="display:none;">
+                        <label for="newPaymentEvidence" class="form-label">
+                            Payment Evidence <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" id="newPaymentEvidence" class="form-control" accept=".jpg,.jpeg,.png,.pdf" />
+                        <small class="text-muted">Accepted: JPG, JPEG, PNG, PDF (max 10MB)</small>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="button" id="newBtnSubmitPayment" class="btn btn-success btn-lg" disabled>
+                        <i class="bi bi-check-circle me-2"></i>Submit Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/lib/jquery.blockui/jquery.blockui.js"></script>
+    <partial name="_DatatablesScriptsFiles" />
+    <script>
+        window.userPermissions = {
+            canCreate: @(Permissions.CanCreate ? "true" : "false"),
+            canEdit: @(Permissions.CanEdit ? "true" : "false"),
+            canDelete: @(Permissions.CanDelete ? "true" : "false")
+        };
+        window.evidenceRequired = @(Model.EvidenceRequired ? "true" : "false");
+        window.newPaymentTermRegId = @Model.TermRegId;
+    </script>
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
+}

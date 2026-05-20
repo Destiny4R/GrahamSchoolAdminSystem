@@ -21,7 +21,7 @@ namespace GrahamSchoolAdminSystemAccess.IServiceRepo
         Task<(List<SchoolSubClassDto> data, int recordsTotal, int recordsFiltered)> GetSchoolSubClassesAsync(int start, int length, string searchValue, int sortColumnIndex, string sortDirection);
         Task<(bool Succeeded, string Message)> CreateSchoolSubClassAsync(SchoolSubClassViewModel model);
         Task<(bool Succeeded, string Message)> UpdateSchoolSubClassAsync(SchoolSubClassViewModel model);
-        Task<(bool Succeeded, string Message)> DeleteSchoolSunClassAsync(int id, string message);
+        Task<(bool Succeeded, string Message)> DeleteSchoolSubClassAsync(int id, string message);
 
         //Academic session interfaces
         Task<(List<SessionYearDto> data, int recordsTotal, int recordsFiltered)> GetAcademicSessionAsync(int start, int length, string searchValue, int sortColumnIndex, string sortDirection);

@@ -94,12 +94,18 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
             }
         }
 
-        public async Task<(bool Succeeded, string Message)> DeleteSchoolSunClassAsync(int id, string message)
+        public async Task<(bool Succeeded, string Message)> DeleteSchoolSubClassAsync(int id, string message)
         {
             try
             {
                 if (id <= 0) 
                     return (false, "Invalid sub class selection");
+
+                //Check if any students are registered in this sub class
+                if (await _context.TermRegistrations.AnyAsync(x => x.SchoolSubclassId == id))
+                    return (false, "Students are registered in this sub class. Remove them before proceeding");
+
+                //check if payments set up for this sub c
 
                 var entity = await _context.SchoolSubClasses.FirstOrDefaultAsync(k => k.Id == id);
 

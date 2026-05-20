@@ -1577,5 +1577,23 @@ namespace GrahamSchoolAdminSystemWeb.Controllers
         }
 
         #endregion
+
+
+        [HttpDelete("managesubclass/{id}")]
+        public async Task<IActionResult> ManageSubClass(int id)
+        {
+            try
+            {
+                var item = await _unitOfWork.SystemActivities.DeleteSchoolSubClassAsync(id, "Sub class deletion");
+                if (!item.Succeeded)
+                    return Json(new { success = false, message = item.Message });
+                return Json(new { success = true, message = item.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting sub class");
+                return Json(new { success = false, message = "Error deleting sub class" });
+            }
+        }
     }
 }

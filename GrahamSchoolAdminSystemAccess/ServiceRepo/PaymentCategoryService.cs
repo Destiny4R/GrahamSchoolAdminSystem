@@ -49,8 +49,8 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                         x.Description,
                         x.IsActive,
                         ItemCount = x.PaymentItems.Count,
-                        CreatedAt = x.CreatedAt.ToString("dd/MM/yyyy hh:mm tt"),
-                        UpdatedAt = x.UpdatedAt.ToString("dd/MM/yyyy hh:mm tt")
+                        CreatedAt = x.CreatedAt,
+                        UpdatedAt = x.UpdatedAt
                     })
                     .ToListAsync();
 

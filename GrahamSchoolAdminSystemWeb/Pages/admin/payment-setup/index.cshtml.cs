@@ -32,16 +32,17 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.payment_setup
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                TempData["Error"] = "Invalid form data";
-                return Page();
-            }
-
             try
             {
                 if (SetupModel.Id > 0)
                 {
+                    // Edit: single class update
+                    if (SetupModel.ClassId <= 0)
+                    {
+                        TempData["Error"] = "Please select a class";
+                        return Page();
+                    }
+
                     var result = await _unitOfWork.PaymentSetupService.UpdatePaymentSetupAsync(SetupModel);
                     if (result.Succeeded)
                     {
@@ -64,7 +65,14 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.payment_setup
                 }
                 else
                 {
-                    var result = await _unitOfWork.PaymentSetupService.CreatePaymentSetupAsync(SetupModel);
+                    // Create: batch multi-class
+                    if (SetupModel.ClassIds == null || SetupModel.ClassIds.Count == 0)
+                    {
+                        TempData["Error"] = "Please select at least one class";
+                        return Page();
+                    }
+
+                    var result = await _unitOfWork.PaymentSetupService.CreateBatchPaymentSetupAsync(SetupModel);
                     if (result.Succeeded)
                     {
                         await _unitOfWork.LogService.LogUserActionAsync(
@@ -72,10 +80,10 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.payment_setup
                             userName: User.Identity?.Name,
                             action: "Create",
                             entityType: "PaymentSetup",
-                            entityId: result.Data.ToString(),
-                            message: $"Payment setup created successfully",
+                            entityId: "Batch",
+                            message: result.Message,
                             ipAddress: GetClientIpAddress(),
-                            details: $"Item: {SetupModel.PaymentItemId}, Session: {SetupModel.SessionId}, Term: {SetupModel.Term}, Class: {SetupModel.ClassId}, Amount: {SetupModel.Amount}"
+                            details: $"Item: {SetupModel.PaymentItemId}, Session: {SetupModel.SessionId}, Term: {SetupModel.Term}, Classes: [{string.Join(",", SetupModel.ClassIds)}], Amount: {SetupModel.Amount}"
                         );
 
                         TempData["Success"] = result.Message;

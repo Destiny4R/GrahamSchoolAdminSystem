@@ -396,7 +396,7 @@ body {
 }
 
 .btn-success:hover {
-    background: darken(var(--status-success), 10%);
+    background: #0e9f6e;
     color: var(--color-white);
 }
 
@@ -406,7 +406,7 @@ body {
 }
 
 .btn-danger:hover {
-    background: darken(var(--status-danger), 10%);
+    background: #dc2626;
     color: var(--color-white);
 }
 
@@ -416,7 +416,7 @@ body {
 }
 
 .btn-warning:hover {
-    background: darken(var(--status-warning), 10%);
+    background: #d97706;
     color: var(--color-white);
 }
 
@@ -426,8 +426,14 @@ body {
 }
 
 .btn-info:hover {
-    background: darken(var(--status-info), 10%);
+    background: #2563eb;
     color: var(--color-white);
+}
+
+.btn:hover,
+.btn:focus,
+.btn:focus-visible {
+    text-decoration: none;
 }
 
 .btn-outline {

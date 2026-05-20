@@ -8,6 +8,7 @@
 @section Sheets{
     <link rel="stylesheet" href="~/css/shared-components.css" />
     <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.css" />
     <partial name="_DatatablesSheetFiles" />
 }
 
@@ -16,7 +17,7 @@
         <h1>
             <i class="bi bi-receipt"></i> Payment Items
         </h1>
-        <p class="text-muted">Manage individual payment items under categories</p>
+        <p class="text-white">Manage individual payment items under categories</p>
     </div>
     <div class="header-actions">
         @if (Permissions.CanCreate)
@@ -60,17 +61,18 @@
         </div>
     </div>
 
-    <div class="datatable-container">
-        <table id="paymentItemsTable" class="table table-hover">
+    <div class="">
+        <table id="paymentItemsTable" class="table table-hover" style="font-family:'Playfair Display', serif;">
             <thead>
                 <tr>
-                    <th class="col-1">#</th>
+                    <th>#</th>
                     <th>Item Name</th>
                     <th>Category</th>
                     <th>Description</th>
-                    <th class="col-1">Status</th>
-                    <th class="col-2">Created</th>
-                    <th class="col-1">Actions</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -201,7 +203,10 @@
 }
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/lib/jquery.blockUI/jquery.blockUI.min.js"></script>
     <partial name="_DatatablesScriptsFiles" />
+
     <script>
         window.userPermissions = {
             canCreate: @Json.Serialize(Permissions.CanCreate),
@@ -209,5 +214,5 @@
             canDelete: @Json.Serialize(Permissions.CanDelete)
         };
     </script>
-    <script src="~/js/appmain.js"></script>
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
 }

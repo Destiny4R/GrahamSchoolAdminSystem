@@ -151,6 +151,7 @@
         {
             <div class="nav-section-label">System</div>
             <a asp-page="/admin/app-settings" class="nav-link"><i class="bi bi-gear-fill"></i> Settings</a>
+            @* <a asp-page="/admin/logs/index" class="nav-link"><i class="bi bi-journal-text"></i> Audit Logs</a> *@
             <a href="#" class="nav-link"><i class="bi bi-question-circle-fill"></i> Help & Support</a>
         }
 
@@ -181,11 +182,6 @@
             <input type="text" placeholder="Search students, classes…" />
         </div>
 
-        <!-- Dark Mode Toggle -->
-        <div class="icon-btn" id="darkToggle" title="Toggle dark mode">
-            <i class="bi bi-moon"></i>
-        </div>
-
         <!-- NOTIFICATION BELL -->
         @if (canReport)
         {
@@ -211,79 +207,6 @@
         }
 
         <!-- MESSAGES -->
-        <div class="notif-wrap" id="msgWrap">
-            <div class="icon-btn" id="msgBtn" title="Messages">
-                <i class="bi bi-envelope-fill"></i>
-                <span class="notif-dot" style="background:#a855f7;"></span>
-            </div>
-            <!-- Messages Panel -->
-            <div class="notif-panel" id="msgPanel" style="width:340px;">
-                <div class="drop-header">
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="drop-title">Messages</span>
-                        <span class="unread-count" style="background:#a855f7;">3</span>
-                    </div>
-                    <span class="drop-mark">Mark all read</span>
-                </div>
-
-                <!-- Message Items -->
-                <div class="msg-item unread">
-                    <div class="msg-ava" style="background:#e8f4ff;color:#3b82f6;">MR</div>
-                    <div style="flex:1;min-width:0;">
-                        <div class="d-flex align-items-center">
-                            <span class="msg-sender">Mr. Rasheed (HOD Math)</span>
-                            <span class="msg-time">9:42 AM</span>
-                        </div>
-                        <div class="msg-preview">Please approve the new exam schedule I submitted yesterday.</div>
-                    </div>
-                    <div class="msg-unread-dot"></div>
-                </div>
-                <div class="msg-item unread">
-                    <div class="msg-ava" style="background:#fef4d3;color:#c4860e;">FO</div>
-                    <div style="flex:1;min-width:0;">
-                        <div class="d-flex align-items-center">
-                            <span class="msg-sender">Finance Officer</span>
-                            <span class="msg-time">8:15 AM</span>
-                        </div>
-                        <div class="msg-preview">Monthly fee report is ready for your review and signature.</div>
-                    </div>
-                    <div class="msg-unread-dot"></div>
-                </div>
-                <div class="msg-item unread">
-                    <div class="msg-ava" style="background:#fff0f2;color:var(--rose);">PT</div>
-                    <div style="flex:1;min-width:0;">
-                        <div class="d-flex align-items-center">
-                            <span class="msg-sender">Parent: Tunde's Dad</span>
-                            <span class="msg-time">Yesterday</span>
-                        </div>
-                        <div class="msg-preview">I would like to discuss my son's attendance record this term.</div>
-                    </div>
-                    <div class="msg-unread-dot"></div>
-                </div>
-                <div class="msg-item">
-                    <div class="msg-ava" style="background:#e6faf4;color:var(--mint);">VP</div>
-                    <div style="flex:1;min-width:0;">
-                        <div class="d-flex align-items-center">
-                            <span class="msg-sender">Vice Principal</span>
-                            <span class="msg-time">Mar 25</span>
-                        </div>
-                        <div class="msg-preview">Staff meeting rescheduled to Friday 8:00 AM. Please notify all HODs.</div>
-                    </div>
-                </div>
-                <div class="msg-item">
-                    <div class="msg-ava" style="background:#f0e8ff;color:#a855f7;">IT</div>
-                    <div style="flex:1;min-width:0;">
-                        <div class="d-flex align-items-center">
-                            <span class="msg-sender">IT Support</span>
-                            <span class="msg-time">Mar 24</span>
-                        </div>
-                        <div class="msg-preview">Portal maintenance completed. All modules are now online.</div>
-                    </div>
-                </div>
-
-                <div class="notif-footer"><a href="#">Open full inbox →</a></div>
-            </div>
-        </div>
 
         <!-- PROFILE AVATAR + DROPDOWN -->
         <div class="profile-wrap" id="profileWrap">
@@ -322,13 +245,13 @@
             <div class="d-flex flex-column flex-sm-row align-items-center justify-content-center gap-2 gap-sm-4">
                 <span>© 2026 <span>Graham International School</span>. All rights reserved.</span>
                 <span class="d-none d-sm-inline" style="opacity:.3;">|</span>
-                <span>Designed &amp; Developed by <span>D-Best Return Tech</span></span>
-                <span class="d-none d-sm-inline" style="opacity:.3;">|</span>
+                <span>Designed &amp; Developed by <span>D-Best Return Tech - 08039410863</span></span>
+                @* <span class="d-none d-sm-inline" style="opacity:.3;">|</span>
                 <span>
                     <a href="#">Privacy Policy</a> &nbsp;·&nbsp;
                     <a href="#">Terms of Use</a> &nbsp;·&nbsp;
                     <a href="#">Support</a>
-                </span>
+                </span> *@
             </div>
         </footer>
 

@@ -73,7 +73,7 @@ namespace GrahamSchoolAdminSystemWeb.Pages.admin.sub_class
         // DELETE
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
-            var result = await _unitOfWork.SystemActivities.DeleteSchoolSunClassAsync(id, "Deleted by admin");
+            var result = await _unitOfWork.SystemActivities.DeleteSchoolSubClassAsync(id, "Deleted by admin");
 
             if (result.Succeeded)
             {

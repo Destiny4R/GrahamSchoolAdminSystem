@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" href="~/css/shared-components.css" />
 <link rel="stylesheet" href="~/css/admin-pages.css" />
+<link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.css"/>
 <partial name="_DatatablesSheetFiles" />
 
 <div class="page-header">
@@ -156,7 +157,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/lib/jquery.blockUI/jquery.blockUI.min.js"></script>
     <partial name="_DatatablesScriptsFiles" />
+
     <script>
         window.userPermissions = {
             canCreate: @Json.Serialize(Permissions.CanCreate),
@@ -164,5 +168,5 @@
             canDelete: @Json.Serialize(Permissions.CanDelete)
         };
     </script>
-    <script src="~/js/appmain.js"></script>
+    <script src="~/js/appmain.js" asp-append-version="true"></script>
 }

@@ -210,7 +210,7 @@ namespace GrahamSchoolAdminSystemAccess.Data
         /// </summary>
         private static async Task SeedAdminUser(UserManager<ApplicationUser> userManager, ApplicationDbContext context, ILogger logger)
         {
-            const string adminEmail = "admin@grahamschool.com";
+            const string adminEmail = "info@grahamgboko.name.ng";
             const string adminPassword = "Admin@123456";
             const string adminUserName = "admin";
 

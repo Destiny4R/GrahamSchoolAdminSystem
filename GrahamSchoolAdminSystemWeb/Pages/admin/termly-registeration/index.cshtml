@@ -280,11 +280,17 @@
                             orderable: false,
                             searchable: false,
                             render: function (data, type, row) {
-                                if (row.hasPayment) {
-                                    return '<span class="badge bg-warning text-dark" title="Payment recorded — cannot edit or delete"><i class="bi bi-lock-fill me-1"></i>Locked</span>';
-                                }
                                 var perms = window.userPermissions || {};
+                                var makePaymentLink = '<a class="btn btn-sm btn-success me-1" href="/admin/student-payments/new-payment?termRegId=' + row.id + '"><i class="bi bi-cash-coin me-1"></i>Pay</a>';
+
+                                if (row.hasPayment) {
+                                    return makePaymentLink + '<span class="badge bg-warning text-dark" title="Payment recorded — cannot edit or delete"><i class="bi bi-lock-fill me-1"></i>Locked</span>';
+                                }
+
                                 var items = '';
+                                if (perms.canCreate) {
+                                    items += '<li><a class="dropdown-item" href="/admin/student-payments/new-payment?termRegId=' + row.id + '"><i class="bi bi-cash-coin"></i> Make Payment</a></li>';
+                                }
                                 if (perms.canEdit) {
                                     items += '<li><a class="dropdown-item" href="/admin/termly-registeration/upsert?id=' + row.id + '"><i class="bi bi-pencil-square"></i> Edit</a></li>';
                                 }
@@ -292,13 +298,14 @@
                                     items += '<li><button class="dropdown-item btn-delete-single" data-id="' + row.id + '"><i class="bi bi-trash"></i> Delete</button></li>';
                                 }
                                 if (!items) return '';
-                                return '<div class="dropdown">' +
+                                return makePaymentLink + '<div class="dropdown d-inline-block">' +
                                     '<button class="btn btn-dark btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">' +
                                     '<i class="bi bi-three-dots-vertical me-1"></i></button>' +
                                     '<ul class="dropdown-menu">' + items + '</ul></div>';
                             }
                         }
-                    ]
+                    ],
+                    order: [[7, 'desc']]
                 });
             }
 

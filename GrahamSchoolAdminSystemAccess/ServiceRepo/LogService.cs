@@ -332,5 +332,90 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                 return new List<dynamic>();
             }
         }
+
+        /// <summary>
+        /// Get logs for server-side DataTable processing
+        /// </summary>
+        public async Task<(List<object> data, int recordsTotal, int recordsFiltered)> GetLogsDataTableAsync(
+            int skip,
+            int pageSize,
+            string searchTerm,
+            int sortColumn,
+            string sortDirection,
+            string logLevelFilter = null,
+            string actionFilter = null)
+        {
+            try
+            {
+                var query = _db.LogsTables.AsQueryable();
+                var recordsTotal = await query.CountAsync();
+
+                // Apply filters
+                if (!string.IsNullOrEmpty(logLevelFilter))
+                    query = query.Where(l => l.LogLevel == logLevelFilter);
+
+                if (!string.IsNullOrEmpty(actionFilter))
+                    query = query.Where(l => l.Action == actionFilter);
+
+                // Apply search
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    searchTerm = searchTerm.ToLower();
+                    query = query.Where(l =>
+                        (l.Subject != null && l.Subject.ToLower().Contains(searchTerm)) ||
+                        (l.Message != null && l.Message.ToLower().Contains(searchTerm)) ||
+                        (l.UserName != null && l.UserName.ToLower().Contains(searchTerm)) ||
+                        (l.Action != null && l.Action.ToLower().Contains(searchTerm)) ||
+                        (l.EntityType != null && l.EntityType.ToLower().Contains(searchTerm)) ||
+                        (l.EntityId != null && l.EntityId.ToLower().Contains(searchTerm)) ||
+                        (l.IpAddress != null && l.IpAddress.ToLower().Contains(searchTerm))
+                    );
+                }
+
+                var recordsFiltered = await query.CountAsync();
+
+                // Apply sorting
+                query = sortColumn switch
+                {
+                    0 => sortDirection == "asc" ? query.OrderBy(l => l.Id) : query.OrderByDescending(l => l.Id),
+                    1 => sortDirection == "asc" ? query.OrderBy(l => l.LogLevel) : query.OrderByDescending(l => l.LogLevel),
+                    2 => sortDirection == "asc" ? query.OrderBy(l => l.Action) : query.OrderByDescending(l => l.Action),
+                    3 => sortDirection == "asc" ? query.OrderBy(l => l.Subject) : query.OrderByDescending(l => l.Subject),
+                    4 => sortDirection == "asc" ? query.OrderBy(l => l.UserName) : query.OrderByDescending(l => l.UserName),
+                    5 => sortDirection == "asc" ? query.OrderBy(l => l.EntityType) : query.OrderByDescending(l => l.EntityType),
+                    6 => sortDirection == "asc" ? query.OrderBy(l => l.IpAddress) : query.OrderByDescending(l => l.IpAddress),
+                    7 => sortDirection == "asc" ? query.OrderBy(l => l.CreatedDate) : query.OrderByDescending(l => l.CreatedDate),
+                    _ => query.OrderByDescending(l => l.CreatedDate)
+                };
+
+                var data = await query
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .Select(l => new
+                    {
+                        l.Id,
+                        l.LogLevel,
+                        l.Action,
+                        l.Subject,
+                        l.UserName,
+                        l.EntityType,
+                        l.IpAddress,
+                        CreatedDate = l.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss"),
+                        l.Message,
+                        l.EntityId,
+                        l.Details,
+                        l.StatusCode,
+                        l.UserId
+                    })
+                    .ToListAsync();
+
+                return (data.Cast<object>().ToList(), recordsTotal, recordsFiltered);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error retrieving logs DataTable: {ex.Message}");
+                return (new List<object>(), 0, 0);
+            }
+        }
     }
 }
