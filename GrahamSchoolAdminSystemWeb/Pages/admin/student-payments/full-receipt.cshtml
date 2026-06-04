@@ -181,6 +181,7 @@
             .category-section { break-inside: avoid; }
         }
     </style>
+    
 </head>
 <body>
 @if (Model.Receipt != null)
@@ -214,7 +215,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Class:</span>
-                <span>@Model.Receipt.ClassName</span>
+                <span>@Model.Receipt.ClassName - @Model.Receipt.SubClassName</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Session:</span>

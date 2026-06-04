@@ -126,6 +126,7 @@ namespace GrahamSchoolAdminSystemModels.ViewModels
         public string StudentName { get; set; }
         public string AdmissionNo { get; set; }
         public string ClassName { get; set; }
+        public string SubClassName { get; set; }
         public string SessionName { get; set; }
         public string TermName { get; set; }
         public DateTime PrintDate { get; set; } = DateTime.UtcNow;

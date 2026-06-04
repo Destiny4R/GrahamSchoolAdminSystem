@@ -137,7 +137,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                         name = $"{x.Student.Firstname} {x.Student.Surname}",
                         term = x.Term.ToString(),
                         session = x.SessionYear.Name,
-                        schoolclass = x.SchoolClass.Name,
+                        schoolclass = $"{x.SchoolClass.Name} - {x.SchoolSubClass.Name}",
                         createdate = x.CreatedDate,
                         regnumber = x.Student.ApplicationUser.UserName,
                         hasPayment = _context.StudentPayments.Any(sp => sp.TermRegId == x.Id)

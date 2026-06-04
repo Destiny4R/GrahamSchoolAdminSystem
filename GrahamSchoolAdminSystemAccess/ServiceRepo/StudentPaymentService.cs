@@ -338,6 +338,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     .Include(t => t.Student).ThenInclude(s => s.ApplicationUser)
                     .Include(t => t.SchoolClass)
                     .Include(t => t.SessionYear)
+                    .Include(t => t.SchoolSubClass)
                     .FirstOrDefaultAsync(t => t.Id == termRegId);
 
                 if (termReg == null) return null;
@@ -384,7 +385,8 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     SessionName = termReg.SessionYear?.Name ?? "Unknown",
                     TermName = GetTermName(termReg.Term),
                     PrintDate = DateTime.UtcNow,
-                    Categories = categories
+                    Categories = categories,
+                    SubClassName = termReg.SchoolSubClass?.Name
                 };
             }
             catch (Exception ex)
@@ -404,6 +406,7 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     .Include(p => p.TermRegistration).ThenInclude(t => t.Student).ThenInclude(s => s.ApplicationUser)
                     .Include(p => p.TermRegistration).ThenInclude(t => t.SchoolClass)
                     .Include(p => p.TermRegistration).ThenInclude(t => t.SessionYear)
+                    .Include(p => p.TermRegistration).ThenInclude(t => t.SchoolSubClass)
                     .AsQueryable();
 
                 if (sessionFilter.HasValue && sessionFilter.Value > 0)
@@ -441,9 +444,9 @@ namespace GrahamSchoolAdminSystemAccess.ServiceRepo
                     {
                         p.Id,
                         p.TermRegId,
-                        StudentName = p.TermRegistration.Student.Surname + " " + p.TermRegistration.Student.Firstname,
+                        StudentName = p.TermRegistration.Student.FullName,
                         AdmissionNo = p.TermRegistration.Student.ApplicationUser.UserName ?? "N/A",
-                        ClassName = p.TermRegistration.SchoolClass.Name,
+                        ClassName = $"{p.TermRegistration.SchoolClass.Name} - {p.TermRegistration.SchoolSubClass.Name}",
                         SessionName = p.TermRegistration.SessionYear.Name,
                         p.TermRegistration.Term,
                         p.TotalAmount,
